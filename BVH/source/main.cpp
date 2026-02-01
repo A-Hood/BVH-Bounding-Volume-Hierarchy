@@ -207,11 +207,15 @@ void CheckCollison(FloatRect collisionBox)
 }
 
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
-void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode) {
-
-	
+void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode) 
+{
 	// Do not continue if this node is a nullptr
 	if (currentNode == nullptr)
+	{
+		return;
+	}
+	// If the searchRect is not within this current node, do not proceed
+	if (!BoxBoxCollision(searchRect, currentNode->boundingBox))
 	{
 		return;
 	}
@@ -222,11 +226,9 @@ void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode) {
 		RecursiveSearchBVH(searchRect, currentNode->childB);
 		return;
 	}
-	// Record the node that the searchRect is within
-	if (BoxBoxCollision(searchRect, currentNode->boundingBox))
-	{
-		collidedNodes.push_back(currentNode);
-	}
+	// If this is not a nullptr, the searchRect is within this node, and there are two or fewer objects with this node, then write it down
+	collidedNodes.emplace_back(currentNode);
+	
 }
 
 void CheckCollisionsWithinNodes(FloatRect boundingBox)
