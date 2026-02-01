@@ -89,7 +89,7 @@
       <AdditionalLibraryDirectories>.\lib\SFML-2.5.1\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy "$(ProjectDir)resources\*.dll" "$(OutputPath)" /C</Command>
+      <Command>xcopy "$(ProjectDir)resources\*.dll" "$(OutputPath)" /D</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>CopyDLLs</Message>
