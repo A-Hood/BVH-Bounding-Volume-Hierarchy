@@ -58,19 +58,14 @@ struct GameObject {
 };
 
 struct Node {
-	Node(std::vector<GameObject>& gameObjects, int _id)
-	{
-		ptrGameObjects = &gameObjects;
-		id = _id;
-	}
+	Node() = default;
 
-	void CreateLink(Node* _previousNode, Node* _childA, Node* _childB)
+	// Defines GameObjects within that node
+	void DefineGameObjects(std::vector<GameObject*> gameObjectsInNode)
 	{
-		previousNode = _previousNode;
-		childA = _childA;
-		childB = _childB;
+		gameObjects = gameObjectsInNode;
 	}
-
+	// Bounds of the Node
 	void DefineBounds(float _left, float _top, float _width, float _height)
 	{
 		boundingBox.left = _left;
@@ -85,14 +80,19 @@ struct Node {
 		bbVisual.setOutlineThickness(3);
 		bbVisual.setFillColor(sf::Color(0, 0, 0, 0));
 	}
+	// Define the previous nodes and child nodes
+	void CreateLink(Node* _previousNode, Node* _childA, Node* _childB)
+	{
+		previousNode = _previousNode;
+		childA = _childA;
+		childB = _childB;
+	}
 
 	Node* previousNode = nullptr;
 	Node* childA = nullptr;
 	Node* childB = nullptr;
 
-	int id;
-
-	std::vector<GameObject>* ptrGameObjects;
+	std::vector<GameObject*> gameObjects;
 	FloatRect boundingBox;
 	sf::RectangleShape bbVisual;
 };
@@ -100,33 +100,70 @@ struct Node {
 std::vector<GameObject> gameObjects;
 std::vector<Node> bvh;
 
-FloatRect birdObject = {48, 48, 32, 32};
 
+// TODO: Will be removed, only for debug purposes
+/* Ignores bvh and manually checks all the collisions with every GameObject
+ * Useful to check if the bvh is working correctly
+ */
+std::vector<GameObject*> tempCollisions;
+
+FloatRect birdObject = {48, 48, 32, 32};
+std::vector<Node*> collidedNodes;		// Each bird in angry birds will have this
+
+// Example of GameObjects within an application
 void CreateGameObjects()
 {
 	// Creation of example obbjects
 	gameObjects.emplace_back("circle", FloatRect(0, 0, 64, 64));
 	gameObjects.emplace_back("chair", FloatRect(64, 0, 64, 64));
 	gameObjects.emplace_back("dino", FloatRect(128, 0, 64, 64));
-	gameObjects.emplace_back("square", FloatRect(192, 0, 64, 64));
+	gameObjects.emplace_back("obama", FloatRect(192, 0, 64, 64));
 	gameObjects.emplace_back("chicken", FloatRect(0, 64, 64, 64));
 	gameObjects.emplace_back("jockey", FloatRect(64, 64, 64, 64));
 	gameObjects.emplace_back("frog", FloatRect(128, 64, 64, 64));
 	gameObjects.emplace_back("shark", FloatRect(192, 64, 64, 64));
 }
 
+bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
+{
+	if (boxA.left < boxB.left + boxB.width &&
+			boxA.left + boxA.width > boxB.left &&
+			boxA.top + boxA.height > boxB.top &&
+			boxA.top < boxB.top + boxB.height)
+	{
+		return true;
+	}
+	return false;
+}
+
+std::vector<GameObject*> CalculateObjectsWithinNode(FloatRect boundingBox)
+{
+	std::vector<GameObject*> tempVector;
+	// Go through each game object and check if it lies within the specified bounding box
+	for (GameObject& object : gameObjects)
+	{
+		if (!BoxBoxCollision(boundingBox, object.boundingBox))
+		{
+			// Not within box
+			continue;
+		}
+		tempVector.emplace_back(&object);
+	}
+	return tempVector;
+}
+
 void CreateBVH()
 {
 	// Creation of the bvh - will be automated
-	bvh.emplace_back(gameObjects, 0);		// Master = 0
-	bvh.emplace_back(gameObjects, 1);		// 1
-	bvh.emplace_back(gameObjects, 2);		// 2
-	bvh.emplace_back(gameObjects, 3);		// 3
-	bvh.emplace_back(gameObjects, 4);		// 4
-	bvh.emplace_back(gameObjects, 5);		// 5
-	bvh.emplace_back(gameObjects, 6);		// 6
+	bvh.emplace_back();		// Master = 0
+	bvh.emplace_back();		// 1
+	bvh.emplace_back();		// 2
+	bvh.emplace_back();		// 3
+	bvh.emplace_back();		// 4
+	bvh.emplace_back();		// 5
+	bvh.emplace_back();		// 6
 
-	// Create the links between nodes
+	// Create the links between nodes - will be automated
 	bvh[0].CreateLink(nullptr, &bvh[1], &bvh[2]);
 	bvh[1].CreateLink(&bvh[0], &bvh[3], &bvh[5]);
 	bvh[2].CreateLink(&bvh[0], &bvh[4], &bvh[6]);
@@ -136,29 +173,31 @@ void CreateBVH()
 	bvh[6].CreateLink(&bvh[2], nullptr, nullptr);
 
 	// Calculate the float rects for all the nodes in the bvh - will be automated
-	bvh[0].DefineBounds(0, 0, 256, 128);			// Master = 0
-	bvh[1].DefineBounds(0, 0, 128, 128);			// 1
-	bvh[2].DefineBounds(64, 0, 128, 128);			// 2
+	bvh[0].DefineBounds(0, 0, 256, 128);				// Master = 0
+	bvh[1].DefineBounds(0, 0, 128, 128);				// 1
+	bvh[2].DefineBounds(128, 0, 128, 128);			// 2
 	bvh[3].DefineBounds(0, 0, 128, 64);				// 3
-	bvh[4].DefineBounds(64, 0, 128, 64);			// 4
-	bvh[5].DefineBounds(0, 64, 128, 64);			// 5
-	bvh[6].DefineBounds(64, 64, 128, 64);			// 6
+	bvh[4].DefineBounds(128, 0, 128, 64);			// 4
+	bvh[5].DefineBounds(0, 64, 128, 64);				// 5
+	bvh[6].DefineBounds(128, 64, 128, 64);			// 6
+
+	// Calculate what objects are given within the nodes
+	for (Node& node : bvh)
+	{
+		std::vector<GameObject*> objectsWithinNode = CalculateObjectsWithinNode(node.boundingBox);
+		node.DefineGameObjects(objectsWithinNode);
+	}
 }
 
-std::vector<GameObject*> goCollisionQueue;
 // Will change, the function will pass in the vector of what's inside that bounding box of the bvh rather than all objects
 void CheckCollison(FloatRect collisionBox)
 {
-
 	auto t1 = std::chrono::high_resolution_clock::now();
 	for (GameObject& object : gameObjects)
 	{
-		if (collisionBox.left < object.boundingBox.left + object.boundingBox.width &&
-			collisionBox.left + collisionBox.width >= object.boundingBox.left &&
-			collisionBox.top + collisionBox.height >= object.boundingBox.top &&
-			collisionBox.top < object.boundingBox.top + object.boundingBox.height)
+		if (BoxBoxCollision(collisionBox, object.boundingBox))
 		{
-			goCollisionQueue.push_back(&object);
+			tempCollisions.push_back(&object);
 		}
 	}
 	auto t2 = std::chrono::high_resolution_clock::now();
@@ -166,44 +205,45 @@ void CheckCollison(FloatRect collisionBox)
 	fullSearch_timeInMs += time.count();
 }
 
-bool CheckIfIntersecting(FloatRect bbox1, FloatRect bbox2) {
-	if (bbox1.left < bbox2.left   + bbox2.width &&
-		bbox1.left + bbox1.width  >= bbox2.left &&
-		bbox1.top  + bbox1.height >= bbox2.top  &&
-		bbox1.top  < bbox2.top    + bbox2.height ) 
-	{
-		// Collision has occured
-		return true;
-	}
-
-	return false;
-}
-
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
-std::vector<Node*> collisionQueue;
-void RecursiveSearchBVH(FloatRect searchRect,
-	                    Node* node) {
+void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode) {
 
-	auto t1 = std::chrono::high_resolution_clock::now();
-
-    if (CheckIfIntersecting(searchRect, node->boundingBox)) {
-		/* Check if leaf */
-        if (node->childA == nullptr && node->childB == nullptr) {
-			collisionQueue.push_back(node);
-			//LOG(std::string("Collision is occuring at node: " + std::to_string(node->id)))
-        }
-		/* If main node, search child nodes */
-		else {
-			RecursiveSearchBVH(searchRect, node->childA);
-			RecursiveSearchBVH(searchRect, node->childB);
-		}
-    }
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	bvhRecursive_timeInMs += time.count();
+	
+	// Do not continue if this node is a nullptr
+	if (currentNode == nullptr)
+	{
+		return;
+	}
+	// Go to child nodes if there are more than 2 objects in this current node
+	if (currentNode->gameObjects.size() > 2)
+	{
+		RecursiveSearchBVH(searchRect, currentNode->childA);
+		RecursiveSearchBVH(searchRect, currentNode->childB);
+		return;
+	}
+	// Record the node that the searchRect is within
+	if (BoxBoxCollision(searchRect, currentNode->boundingBox))
+	{
+		collidedNodes.push_back(currentNode);
+	}
 }
 
-
+void CheckCollisionsWithinNodes(FloatRect boundingBox)
+{
+	
+	for (Node* node : collidedNodes)
+	{
+		// Check collisions with object inside of node
+		for (GameObject* object : node->gameObjects)
+		{
+			if (BoxBoxCollision(boundingBox, object->boundingBox))
+			{
+				
+			}
+		}
+	}
+	
+}
 
 
 int main()
@@ -211,15 +251,26 @@ int main()
 	/* Seed random */
 	srand(time(0));
 
+	// Creation of BVH and GameObjects
 	CreateGameObjects();
 	CreateBVH();
-	//std::cout << "Size of BVH: " << bvh.size() << std::endl;
 
+	// Check all of the collisions
 	CheckCollison(birdObject);
+
+	auto t1 = std::chrono::high_resolution_clock::now();
+	// Traverse through the bvh, then check objects within that node
 	RecursiveSearchBVH(birdObject, &bvh[0]);
-	std::cout << "Size of Full Search collisionQueue: " << goCollisionQueue.size() << std::endl;
+	CheckCollisionsWithinNodes(birdObject);
+
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float, std::milli> time = t2 - t1;
+	bvhRecursive_timeInMs += time.count();
+
+
+	std::cout << "Size of Full Search collisionQueue: " << tempCollisions.size() << std::endl;
 	std::cout << "Full Search time to complete : " << fullSearch_timeInMs << "ms" << std::endl;
-	std::cout << "Size of BVH Traverse collisionQueue: " << collisionQueue.size() << std::endl;
+	std::cout << "Size of BVH Traverse collisionQueue: " << collidedNodes.size() << std::endl;
 	std::cout << "BVH Traverse time to complete : " << bvhRecursive_timeInMs << "ms" << std::endl;
 
 	sf::RenderWindow window(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
