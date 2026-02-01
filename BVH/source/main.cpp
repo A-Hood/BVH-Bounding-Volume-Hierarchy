@@ -109,6 +109,7 @@ std::vector<GameObject*> tempCollisions;
 
 FloatRect birdObject = {48, 48, 32, 32};
 std::vector<Node*> collidedNodes;		// Each bird in angry birds will have this
+std::vector<GameObject*> collidedObjects;
 
 // Example of GameObjects within an application
 void CreateGameObjects()
@@ -238,7 +239,7 @@ void CheckCollisionsWithinNodes(FloatRect boundingBox)
 		{
 			if (BoxBoxCollision(boundingBox, object->boundingBox))
 			{
-				
+				collidedObjects.emplace_back(object);
 			}
 		}
 	}
@@ -267,6 +268,11 @@ int main()
 	std::chrono::duration<float, std::milli> time = t2 - t1;
 	bvhRecursive_timeInMs += time.count();
 
+	// Print out objects hit by traversing bvh
+	for (GameObject* object : collidedObjects) 
+	{
+		std::cout << "Object collided with: " << object->name << "\n";
+	}
 
 	std::cout << "Size of Full Search collisionQueue: " << tempCollisions.size() << std::endl;
 	std::cout << "Full Search time to complete : " << fullSearch_timeInMs << "ms" << std::endl;
