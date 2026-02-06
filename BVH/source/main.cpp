@@ -137,6 +137,18 @@ bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
 	return false;
 }
 
+
+
+
+// BVH Stuff ------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 std::vector<GameObject*> CalculateObjectsWithinNode(FloatRect boundingBox)
 {
 	std::vector<GameObject*> tempVector;
@@ -152,17 +164,43 @@ std::vector<GameObject*> CalculateObjectsWithinNode(FloatRect boundingBox)
 	}
 	return tempVector;
 }
+void CreateNodes()
+{
+	bvh.emplace_back();		// Master = 0
+	size_t numberOfObjects = gameObjects.size();
+
+	// Check if even or odd
+	if (numberOfObjects % 2 == 1)
+	{
+		// Odd
+		bvh.emplace_back();
+		bvh.emplace_back();
+		numberOfObjects--;
+	}
+
+	while (numberOfObjects > 2)
+	{
+		bvh.emplace_back();
+		bvh.emplace_back();
+		numberOfObjects -= 2;
+	}
+}
+
+
 
 void CreateBVH()
 {
-	// Creation of the bvh - will be automated
-	bvh.emplace_back();		// Master = 0
-	bvh.emplace_back();		// 1
-	bvh.emplace_back();		// 2
-	bvh.emplace_back();		// 3
-	bvh.emplace_back();		// 4
-	bvh.emplace_back();		// 5
-	bvh.emplace_back();		// 6
+	// Creation of the bvh
+	CreateNodes();
+
+	// Calculate the float rects for all the nodes in the bvh - will be automated
+	bvh[0].DefineBounds(0, 0, 256, 128);				// Master = 0
+	bvh[1].DefineBounds(0, 0, 128, 128);				// 1
+	bvh[2].DefineBounds(128, 0, 128, 128);				// 2
+	bvh[3].DefineBounds(0, 0, 128, 64);					// 3
+	bvh[4].DefineBounds(128, 0, 128, 64);				// 4
+	bvh[5].DefineBounds(0, 64, 128, 64);				// 5
+	bvh[6].DefineBounds(128, 64, 128, 64);				// 6 
 
 	// Create the links between nodes - will be automated
 	bvh[0].CreateLink(nullptr, &bvh[1], &bvh[2]);
@@ -172,15 +210,6 @@ void CreateBVH()
 	bvh[4].CreateLink(&bvh[2], nullptr, nullptr);
 	bvh[5].CreateLink(&bvh[1], nullptr, nullptr);
 	bvh[6].CreateLink(&bvh[2], nullptr, nullptr);
-
-	// Calculate the float rects for all the nodes in the bvh - will be automated
-	bvh[0].DefineBounds(0, 0, 256, 128);				// Master = 0
-	bvh[1].DefineBounds(0, 0, 128, 128);				// 1
-	bvh[2].DefineBounds(128, 0, 128, 128);			// 2
-	bvh[3].DefineBounds(0, 0, 128, 64);				// 3
-	bvh[4].DefineBounds(128, 0, 128, 64);			// 4
-	bvh[5].DefineBounds(0, 64, 128, 64);				// 5
-	bvh[6].DefineBounds(128, 64, 128, 64);			// 6
 
 	// Calculate what objects are given within the nodes
 	for (Node& node : bvh)
