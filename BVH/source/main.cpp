@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -79,11 +80,9 @@ struct Node {
 		boundingBox.height = _height;
 
 		/* SFML Stuff */
-		bbVisual.setPosition(boundingBox.left, boundingBox.top);
-	    bbVisual.setSize({ boundingBox.width, boundingBox.height });
 		bbVisual.setOutlineColor(sf::Color::Red);
 		bbVisual.setOutlineThickness(3);
-		bbVisual.setFillColor(sf::Color(0, 0, 0, 0));
+		bbVisual.setFillColor(sf::Color::Red);
 	}
 	// Define the previous nodes and child nodes
 	void DefineChildA(Node* _childA)
@@ -111,7 +110,7 @@ struct Node {
 };
 
 std::vector<GameObject> gameObjects;
-std::vector<Node> bvh;
+std::vector<Node*> bvh;
 
 
 // TODO: Will be removed, only for debug purposes
@@ -209,11 +208,11 @@ void CreateNewNode(Node* currentNode)
 	}
 
 	Node* childA = new Node();		// ChildA
-	bvh.emplace_back(*childA);
+	bvh.emplace_back(childA);
 	currentNode->DefineChildA(childA);
 
 	Node* childB = new Node();		// ChildB
-	bvh.emplace_back(*childB);
+	bvh.emplace_back(childB);
 	currentNode->DefineChildB(childB);
 
 	// Assign parent node of both children
@@ -236,7 +235,35 @@ void CreateNewNode(Node* currentNode)
 
 void CalculateNodeBounds(Node* currentNode)
 {
-	
+	// We know the smallest and largest x as those are at the start and end of the vector
+	float smallestX = currentNode->gameObjects.front()->boundingBox.left;
+	float largestX = currentNode->gameObjects.back()->boundingBox.left + currentNode->gameObjects.back()->boundingBox.width;
+
+	// Ensure there are default values
+	float smallestY = currentNode->boundingBox.top;
+	float largestY = currentNode->boundingBox.top + currentNode->boundingBox.height;
+
+	// Find smallest and largest Y values
+	for (GameObject* object : currentNode->gameObjects)
+	{
+		smallestY = std::min(object->boundingBox.top, smallestY);
+		largestY = std::max(object->boundingBox.top + object->boundingBox.height, largestY);
+	}
+
+	currentNode->boundingBox.left = smallestX;
+	currentNode->boundingBox.top = smallestY;
+	currentNode->boundingBox.width = largestX;
+	currentNode->boundingBox.height = largestY;
+
+	LOG("Smallest X: " + std::to_string(smallestX))
+	LOG("Smallest Y: " + std::to_string(smallestY))
+	LOG("Largest X: " + std::to_string(largestX))
+	LOG("Largest Y: " + std::to_string(largestY))
+
+	// DEBUG ONLY
+	currentNode->bbVisual.setPosition(currentNode->boundingBox.left, currentNode->boundingBox.top);
+	currentNode->bbVisual.setSize({ currentNode->boundingBox.width, currentNode->boundingBox.height });
+
 }
 
 
@@ -257,14 +284,14 @@ void CreateBVH()
 
 	// Create master node
 	Node* masterNode = new Node();
-	bvh.emplace_back(*masterNode);
+	bvh.emplace_back(masterNode);
 	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
 
 	// Start creating bvh
 	CreateNewNode(masterNode);
 
 	// Calculate the bounds of all the nodes
-
+	CalculateNodeBounds(masterNode);
 
 }
 
@@ -361,8 +388,9 @@ int main()
 		}
 		/* BVH Visualisation */
 		for (auto node : bvh) {
-			window.draw(node.bbVisual);
+
 		}
+		window.draw(bvh[0]->bbVisual);
 
 		window.display();
 	}
