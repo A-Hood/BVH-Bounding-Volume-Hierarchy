@@ -80,9 +80,11 @@ struct Node {
 		boundingBox.height = _height;
 
 		/* SFML Stuff */
+		bbVisual.setPosition(boundingBox.left, boundingBox.top);
+		bbVisual.setSize({ boundingBox.width, boundingBox.height });
 		bbVisual.setOutlineColor(sf::Color::Red);
 		bbVisual.setOutlineThickness(3);
-		bbVisual.setFillColor(sf::Color::Red);
+		bbVisual.setFillColor(sf::Color(0, 0, 0, 0));
 	}
 	// Define the previous nodes and child nodes
 	void DefineChildA(Node* _childA)
@@ -250,19 +252,16 @@ void CalculateNodeBounds(Node* currentNode)
 		largestY = std::max(object->boundingBox.top + object->boundingBox.height, largestY);
 	}
 
-	currentNode->boundingBox.left = smallestX;
-	currentNode->boundingBox.top = smallestY;
-	currentNode->boundingBox.width = largestX;
-	currentNode->boundingBox.height = largestY;
+	currentNode->DefineBounds(smallestX, smallestY, largestX - smallestX, largestY - smallestY);
 
-	LOG("Smallest X: " + std::to_string(smallestX))
-	LOG("Smallest Y: " + std::to_string(smallestY))
-	LOG("Largest X: " + std::to_string(largestX))
-	LOG("Largest Y: " + std::to_string(largestY))
-
-	// DEBUG ONLY
-	currentNode->bbVisual.setPosition(currentNode->boundingBox.left, currentNode->boundingBox.top);
-	currentNode->bbVisual.setSize({ currentNode->boundingBox.width, currentNode->boundingBox.height });
+	if (currentNode->childA != nullptr)
+	{
+		CalculateNodeBounds(currentNode->childA);
+	}
+	if (currentNode->childB != nullptr)
+	{
+		CalculateNodeBounds(currentNode->childB);
+	}
 
 }
 
@@ -292,6 +291,8 @@ void CreateBVH()
 
 	// Calculate the bounds of all the nodes
 	CalculateNodeBounds(masterNode);
+
+	LOG("Number of nodes: " + std::to_string(bvh.size()))
 
 }
 
@@ -388,9 +389,8 @@ int main()
 		}
 		/* BVH Visualisation */
 		for (auto node : bvh) {
-
+			window.draw(node->bbVisual);
 		}
-		window.draw(bvh[0]->bbVisual);
 
 		window.display();
 	}
