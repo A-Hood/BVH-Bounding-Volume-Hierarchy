@@ -130,13 +130,13 @@ void CreateGameObjects()
 {
 	// Creation of example obbjects
 	gameObjects.emplace_back("circle", FloatRect(0, 0, 64, 64));
-	gameObjects.emplace_back("chair", FloatRect(64, 0, 64, 64));
-	gameObjects.emplace_back("dino", FloatRect(128, 0, 64, 64));
-	gameObjects.emplace_back("obama", FloatRect(192, 0, 64, 64));
-	gameObjects.emplace_back("chicken", FloatRect(0, 64, 64, 64));
-	gameObjects.emplace_back("jockey", FloatRect(64, 64, 64, 64));
-	gameObjects.emplace_back("frog", FloatRect(128, 64, 64, 64));
-	gameObjects.emplace_back("shark", FloatRect(192, 64, 64, 64));
+	gameObjects.emplace_back("chair", FloatRect(119, 0, 64, 64));
+	gameObjects.emplace_back("dino", FloatRect(280 * 2.2f, 0, 64, 64));
+	gameObjects.emplace_back("obama", FloatRect(395 * 3, 0, 64, 64));
+	gameObjects.emplace_back("chicken", FloatRect(86, 128 * 1.2f, 64, 64));
+	gameObjects.emplace_back("jockey", FloatRect(107, 128, 64, 64));
+	gameObjects.emplace_back("frog", FloatRect(230, 128 * 3.17f, 64, 64));
+	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
 }
 
 bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
