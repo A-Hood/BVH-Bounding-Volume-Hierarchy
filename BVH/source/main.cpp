@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -52,6 +53,11 @@ struct GameObject {
 		std::cout << "Created bbVisual for " << _name << std::endl;
 	}
 
+	bool operator<(const GameObject& externalObj)
+	{
+		return this->boundingBox.left < externalObj.boundingBox.left;
+	}
+
 	std::string name;
 	FloatRect boundingBox;
 	sf::RectangleShape bbVisual;
@@ -75,17 +81,25 @@ struct Node {
 
 		/* SFML Stuff */
 		bbVisual.setPosition(boundingBox.left, boundingBox.top);
-	    bbVisual.setSize({ boundingBox.width, boundingBox.height });
+		bbVisual.setSize({ boundingBox.width, boundingBox.height });
 		bbVisual.setOutlineColor(sf::Color::Red);
 		bbVisual.setOutlineThickness(3);
 		bbVisual.setFillColor(sf::Color(0, 0, 0, 0));
 	}
 	// Define the previous nodes and child nodes
-	void CreateLink(Node* _previousNode, Node* _childA, Node* _childB)
+	void DefineChildA(Node* _childA)
 	{
-		previousNode = _previousNode;
-		childA = _childA;
-		childB = _childB;
+		this->childA = _childA;
+	}
+
+	void DefineChildB(Node* _childB)
+	{
+		this->childB = _childB;
+	}
+
+	void DefineParentNode(Node* _parentNode)
+	{
+		this->previousNode = _parentNode;
 	}
 
 	Node* previousNode = nullptr;
@@ -98,7 +112,7 @@ struct Node {
 };
 
 std::vector<GameObject> gameObjects;
-std::vector<Node> bvh;
+std::vector<Node*> bvh;
 
 
 // TODO: Will be removed, only for debug purposes
@@ -116,13 +130,13 @@ void CreateGameObjects()
 {
 	// Creation of example obbjects
 	gameObjects.emplace_back("circle", FloatRect(0, 0, 64, 64));
-	gameObjects.emplace_back("chair", FloatRect(64, 0, 64, 64));
-	gameObjects.emplace_back("dino", FloatRect(128, 0, 64, 64));
-	gameObjects.emplace_back("obama", FloatRect(192, 0, 64, 64));
-	gameObjects.emplace_back("chicken", FloatRect(0, 64, 64, 64));
-	gameObjects.emplace_back("jockey", FloatRect(64, 64, 64, 64));
-	gameObjects.emplace_back("frog", FloatRect(128, 64, 64, 64));
-	gameObjects.emplace_back("shark", FloatRect(192, 64, 64, 64));
+	gameObjects.emplace_back("chair", FloatRect(119, 0, 64, 64));
+	gameObjects.emplace_back("dino", FloatRect(280 * 2.2f, 0, 64, 64));
+	gameObjects.emplace_back("obama", FloatRect(395 * 3, 0, 64, 64));
+	gameObjects.emplace_back("chicken", FloatRect(86, 128 * 1.2f, 64, 64));
+	gameObjects.emplace_back("jockey", FloatRect(107, 128, 64, 64));
+	gameObjects.emplace_back("frog", FloatRect(230, 128 * 3.17f, 64, 64));
+	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
 }
 
 bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
@@ -138,86 +152,8 @@ bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
 }
 
 
+// DEBUG STUFF  ---------------------------------------------------------------------------------------------------------------------
 
-
-// BVH Stuff ------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-std::vector<GameObject*> CalculateObjectsWithinNode(FloatRect boundingBox)
-{
-	std::vector<GameObject*> tempVector;
-	// Go through each game object and check if it lies within the specified bounding box
-	for (GameObject& object : gameObjects)
-	{
-		if (!BoxBoxCollision(boundingBox, object.boundingBox))
-		{
-			// Not within box
-			continue;
-		}
-		tempVector.emplace_back(&object);
-	}
-	return tempVector;
-}
-void CreateNodes()
-{
-	bvh.emplace_back();		// Master = 0
-	size_t numberOfObjects = gameObjects.size();
-
-	// Check if even or odd
-	if (numberOfObjects % 2 == 1)
-	{
-		// Odd
-		bvh.emplace_back();
-		bvh.emplace_back();
-		numberOfObjects--;
-	}
-
-	while (numberOfObjects > 2)
-	{
-		bvh.emplace_back();
-		bvh.emplace_back();
-		numberOfObjects -= 2;
-	}
-}
-
-
-
-void CreateBVH()
-{
-	// Creation of the bvh
-	CreateNodes();
-
-	// Calculate the float rects for all the nodes in the bvh - will be automated
-	bvh[0].DefineBounds(0, 0, 256, 128);				// Master = 0
-	bvh[1].DefineBounds(0, 0, 128, 128);				// 1
-	bvh[2].DefineBounds(128, 0, 128, 128);				// 2
-	bvh[3].DefineBounds(0, 0, 128, 64);					// 3
-	bvh[4].DefineBounds(128, 0, 128, 64);				// 4
-	bvh[5].DefineBounds(0, 64, 128, 64);				// 5
-	bvh[6].DefineBounds(128, 64, 128, 64);				// 6 
-
-	// Create the links between nodes - will be automated
-	bvh[0].CreateLink(nullptr, &bvh[1], &bvh[2]);
-	bvh[1].CreateLink(&bvh[0], &bvh[3], &bvh[5]);
-	bvh[2].CreateLink(&bvh[0], &bvh[4], &bvh[6]);
-	bvh[3].CreateLink(&bvh[1], nullptr, nullptr);
-	bvh[4].CreateLink(&bvh[2], nullptr, nullptr);
-	bvh[5].CreateLink(&bvh[1], nullptr, nullptr);
-	bvh[6].CreateLink(&bvh[2], nullptr, nullptr);
-
-	// Calculate what objects are given within the nodes
-	for (Node& node : bvh)
-	{
-		std::vector<GameObject*> objectsWithinNode = CalculateObjectsWithinNode(node.boundingBox);
-		node.DefineGameObjects(objectsWithinNode);
-	}
-}
 
 // Will change, the function will pass in the vector of what's inside that bounding box of the bvh rather than all objects
 void CheckCollison(FloatRect collisionBox)
@@ -233,6 +169,131 @@ void CheckCollison(FloatRect collisionBox)
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
 	fullSearch_timeInMs += time.count();
+}
+
+size_t printCounter = 0;
+void PrintGameObjectNames(std::vector<GameObject*> myVec)
+{
+	LOG("-------------- Printing objects, counter: " + std::to_string(printCounter) + " --------------")
+	for (GameObject* object : myVec)
+	{
+		LOG(object->name)
+	}
+	LOG("-------------- Printing objects end --------------")
+	printCounter++;
+}
+
+// BVH Stuff ------------------------------------------------------------------------------------------------------------------------
+
+void OrganiseGameObjects()
+{
+	std::sort(gameObjects.begin(), gameObjects.end());
+}
+
+std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVector)
+{
+	std::vector<GameObject*> newVector;
+	for (GameObject& object : gameObjectVector)
+	{
+		newVector.push_back(&object);
+	}
+	return newVector;
+}
+
+void CreateNewNode(Node* currentNode)
+{
+	// End node creation if the number of objects in the current node is 2 or less
+	if (currentNode->gameObjects.size() <= 2)
+	{
+		// This node is now a leaf node
+		return;
+	}
+
+	Node* childA = new Node();		// ChildA
+	bvh.emplace_back(childA);
+	currentNode->DefineChildA(childA);
+
+	Node* childB = new Node();		// ChildB
+	bvh.emplace_back(childB);
+	currentNode->DefineChildB(childB);
+
+	// Assign parent node of both children
+	currentNode->childA->DefineParentNode(currentNode);
+	currentNode->childB->DefineParentNode(currentNode);
+
+	// Divide and conqour
+	size_t midPoint = currentNode->gameObjects.size() / 2;
+	std::vector<GameObject*> leftSide = {currentNode->gameObjects.begin(), currentNode->gameObjects.begin() + midPoint};
+	std::vector<GameObject*> rightSide = {currentNode->gameObjects.begin() + midPoint, currentNode->gameObjects.end()};
+
+	// Define objects in the next node
+	currentNode->childA->DefineGameObjects(leftSide);
+	currentNode->childB->DefineGameObjects(rightSide);
+
+	// Recurse to child nodes
+	CreateNewNode(currentNode->childA);
+	CreateNewNode(currentNode->childB);
+}
+
+void CalculateNodeBounds(Node* currentNode)
+{
+	// We know the smallest and largest x as those are at the start and end of the vector
+	float smallestX = currentNode->gameObjects.front()->boundingBox.left;
+	float largestX = currentNode->gameObjects.back()->boundingBox.left + currentNode->gameObjects.back()->boundingBox.width;
+
+	// Ensure there are default values
+	float smallestY = currentNode->boundingBox.top;
+	float largestY = currentNode->boundingBox.top + currentNode->boundingBox.height;
+
+	// Find smallest and largest Y values
+	for (GameObject* object : currentNode->gameObjects)
+	{
+		smallestY = std::min(object->boundingBox.top, smallestY);
+		largestY = std::max(object->boundingBox.top + object->boundingBox.height, largestY);
+	}
+
+	currentNode->DefineBounds(smallestX, smallestY, largestX - smallestX, largestY - smallestY);
+
+	if (currentNode->childA != nullptr)
+	{
+		CalculateNodeBounds(currentNode->childA);
+	}
+	if (currentNode->childB != nullptr)
+	{
+		CalculateNodeBounds(currentNode->childB);
+	}
+
+}
+
+
+void CreateBVH()
+{
+	/* Steps to create a BVH
+	 * 1. Organise the objects in the vector from smallest x to largest x - done
+	 * 2. Create a master node which contains a vector of GameObject pointers - done
+	 * 3. Start recursion by passing in the master node
+	 * 4. Create two nodes - done
+	 * 5. Assign the two new nodes as childA and childB of the current node - done
+	 * 6. Find the midpoint of the current node vector - done
+	 * 7. Left side of midpoint goes to childA, while right of midpoint goes to childB - done
+	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less - done
+	 * 9. Calculate the bounds of all nodes using the gameObjects
+	 */
+	OrganiseGameObjects();
+
+	// Create master node
+	Node* masterNode = new Node();
+	bvh.emplace_back(masterNode);
+	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
+
+	// Start creating bvh
+	CreateNewNode(masterNode);
+
+	// Calculate the bounds of all the nodes
+	CalculateNodeBounds(masterNode);
+
+	LOG("Number of nodes: " + std::to_string(bvh.size()))
+
 }
 
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
@@ -262,7 +323,6 @@ void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode)
 
 void CheckCollisionsWithinNodes(FloatRect boundingBox)
 {
-	
 	for (Node* node : collidedNodes)
 	{
 		// Check collisions with object inside of node
@@ -288,12 +348,12 @@ int main()
 	CreateBVH();
 
 	// Check all of the collisions
-	CheckCollison(birdObject);
+	//CheckCollison(birdObject);
 
 	auto t1 = std::chrono::high_resolution_clock::now();
 	// Traverse through the bvh, then check objects within that node
-	RecursiveSearchBVH(birdObject, &bvh[0]);
-	CheckCollisionsWithinNodes(birdObject);
+	//RecursiveSearchBVH(birdObject, &bvh[0]);
+	//CheckCollisionsWithinNodes(birdObject);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
@@ -329,7 +389,7 @@ int main()
 		}
 		/* BVH Visualisation */
 		for (auto node : bvh) {
-			window.draw(node.bbVisual);
+			window.draw(node->bbVisual);
 		}
 
 		window.display();
