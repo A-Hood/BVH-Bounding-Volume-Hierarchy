@@ -52,6 +52,11 @@ struct GameObject {
 		std::cout << "Created bbVisual for " << _name << std::endl;
 	}
 
+	bool operator<(const GameObject& externalObj)
+	{
+		return this->boundingBox.left < externalObj.boundingBox.left;
+	}
+
 	std::string name;
 	FloatRect boundingBox;
 	sf::RectangleShape bbVisual;
@@ -138,31 +143,8 @@ bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
 }
 
 
+// DEBUG STUFF  ---------------------------------------------------------------------------------------------------------------------
 
-
-// BVH Stuff ------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-void CreateBVH()
-{
-	/* Steps to create a BVH
-	 * 1. Organise the objects in the vector from smallest x to largest x
-	 * 2. Create a master node which contains a vector of GameObject pointers
-	 * 3. Start recursion by passing in the master node
-	 * 4. Create two nodes
-	 * 5. Assign the two new nodes as childA and childB of the current node
-	 * 6. Find the midpoint of the current node vector
-	 * 7. Left side of midpoint goes to childA, while right of midpoint goes to childB
-	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less
-	 * 9. Calculate the bounds of the leaf nodes using the gameObjects
-	 */
-
-
-
-}
 
 // Will change, the function will pass in the vector of what's inside that bounding box of the bvh rather than all objects
 void CheckCollison(FloatRect collisionBox)
@@ -178,6 +160,45 @@ void CheckCollison(FloatRect collisionBox)
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
 	fullSearch_timeInMs += time.count();
+}
+
+size_t printCounter = 0;
+void PrintGameObjectNames()
+{
+	LOG("-------------- Printing objects, counter: " + std::to_string(printCounter) + " --------------")
+	for (const GameObject& object : gameObjects)
+	{
+		LOG(object.name)
+	}
+	LOG("-------------- Printing objects end --------------")
+	printCounter++;
+}
+
+// BVH Stuff ------------------------------------------------------------------------------------------------------------------------
+
+void OrganiseGameObjects()
+{
+	std::sort(gameObjects.begin(), gameObjects.end());
+}
+
+
+
+
+void CreateBVH()
+{
+	/* Steps to create a BVH
+	 * 1. Organise the objects in the vector from smallest x to largest x - done
+	 * 2. Create a master node which contains a vector of GameObject pointers
+	 * 3. Start recursion by passing in the master node
+	 * 4. Create two nodes
+	 * 5. Assign the two new nodes as childA and childB of the current node
+	 * 6. Find the midpoint of the current node vector
+	 * 7. Left side of midpoint goes to childA, while right of midpoint goes to childB
+	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less
+	 * 9. Calculate the bounds of the leaf nodes using the gameObjects
+	 */
+	OrganiseGameObjects();
+
 }
 
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
@@ -232,12 +253,12 @@ int main()
 	CreateBVH();
 
 	// Check all of the collisions
-	CheckCollison(birdObject);
+	//CheckCollison(birdObject);
 
 	auto t1 = std::chrono::high_resolution_clock::now();
 	// Traverse through the bvh, then check objects within that node
-	RecursiveSearchBVH(birdObject, &bvh[0]);
-	CheckCollisionsWithinNodes(birdObject);
+	//RecursiveSearchBVH(birdObject, &bvh[0]);
+	//CheckCollisionsWithinNodes(birdObject);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
