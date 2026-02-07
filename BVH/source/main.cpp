@@ -146,77 +146,22 @@ bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
 
 
 
-
-
-
-std::vector<GameObject*> CalculateObjectsWithinNode(FloatRect boundingBox)
-{
-	std::vector<GameObject*> tempVector;
-	// Go through each game object and check if it lies within the specified bounding box
-	for (GameObject& object : gameObjects)
-	{
-		if (!BoxBoxCollision(boundingBox, object.boundingBox))
-		{
-			// Not within box
-			continue;
-		}
-		tempVector.emplace_back(&object);
-	}
-	return tempVector;
-}
-void CreateNodes()
-{
-	bvh.emplace_back();		// Master = 0
-	size_t numberOfObjects = gameObjects.size();
-
-	// Check if even or odd
-	if (numberOfObjects % 2 == 1)
-	{
-		// Odd
-		bvh.emplace_back();
-		bvh.emplace_back();
-		numberOfObjects--;
-	}
-
-	while (numberOfObjects > 2)
-	{
-		bvh.emplace_back();
-		bvh.emplace_back();
-		numberOfObjects -= 2;
-	}
-}
-
-
-
 void CreateBVH()
 {
-	// Creation of the bvh
-	CreateNodes();
+	/* Steps to create a BVH
+	 * 1. Organise the objects in the vector from smallest x to largest x
+	 * 2. Create a master node which contains a vector of GameObject pointers
+	 * 3. Start recursion by passing in the master node
+	 * 4. Create two nodes
+	 * 5. Assign the two new nodes as childA and childB of the current node
+	 * 6. Find the midpoint of the current node vector
+	 * 7. Left side of midpoint goes to childA, while right of midpoint goes to childB
+	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less
+	 * 9. Calculate the bounds of the leaf nodes using the gameObjects
+	 */
 
-	// Calculate the float rects for all the nodes in the bvh - will be automated
-	bvh[0].DefineBounds(0, 0, 256, 128);				// Master = 0
-	bvh[1].DefineBounds(0, 0, 128, 128);				// 1
-	bvh[2].DefineBounds(128, 0, 128, 128);				// 2
-	bvh[3].DefineBounds(0, 0, 128, 64);					// 3
-	bvh[4].DefineBounds(128, 0, 128, 64);				// 4
-	bvh[5].DefineBounds(0, 64, 128, 64);				// 5
-	bvh[6].DefineBounds(128, 64, 128, 64);				// 6 
 
-	// Create the links between nodes - will be automated
-	bvh[0].CreateLink(nullptr, &bvh[1], &bvh[2]);
-	bvh[1].CreateLink(&bvh[0], &bvh[3], &bvh[5]);
-	bvh[2].CreateLink(&bvh[0], &bvh[4], &bvh[6]);
-	bvh[3].CreateLink(&bvh[1], nullptr, nullptr);
-	bvh[4].CreateLink(&bvh[2], nullptr, nullptr);
-	bvh[5].CreateLink(&bvh[1], nullptr, nullptr);
-	bvh[6].CreateLink(&bvh[2], nullptr, nullptr);
 
-	// Calculate what objects are given within the nodes
-	for (Node& node : bvh)
-	{
-		std::vector<GameObject*> objectsWithinNode = CalculateObjectsWithinNode(node.boundingBox);
-		node.DefineGameObjects(objectsWithinNode);
-	}
 }
 
 // Will change, the function will pass in the vector of what's inside that bounding box of the bvh rather than all objects
@@ -262,7 +207,6 @@ void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode)
 
 void CheckCollisionsWithinNodes(FloatRect boundingBox)
 {
-	
 	for (Node* node : collidedNodes)
 	{
 		// Check collisions with object inside of node
