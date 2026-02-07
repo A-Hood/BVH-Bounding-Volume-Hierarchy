@@ -49,8 +49,6 @@ struct GameObject {
 		int rG= rand() % 255;
 		int rB= rand() % 255;
 		bbVisual.setFillColor(sf::Color(rR, rG, rB));
-
-		std::cout << "Created bbVisual for " << _name << std::endl;
 	}
 
 	bool operator<(const GameObject& externalObj)
@@ -121,7 +119,7 @@ std::vector<Node*> bvh;
  */
 std::vector<GameObject*> tempCollisions;
 
-FloatRect birdObject = {48, 48, 32, 32};
+FloatRect birdObject = {90, 128, 32, 32};
 std::vector<Node*> collidedNodes;		// Each bird in angry birds will have this
 std::vector<GameObject*> collidedObjects;
 
@@ -279,6 +277,7 @@ void CreateBVH()
 	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less - done
 	 * 9. Calculate the bounds of all nodes using the gameObjects
 	 */
+	auto t1 = std::chrono::high_resolution_clock::now();
 	OrganiseGameObjects();
 
 	// Create master node
@@ -292,7 +291,9 @@ void CreateBVH()
 	// Calculate the bounds of all the nodes
 	CalculateNodeBounds(masterNode);
 
-	LOG("Number of nodes: " + std::to_string(bvh.size()))
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float, std::milli> time = t2 - t1;
+	LOG("Time to create BVH: " + std::to_string(time.count()) + "ms")
 
 }
 
@@ -334,7 +335,6 @@ void CheckCollisionsWithinNodes(FloatRect boundingBox)
 			}
 		}
 	}
-	
 }
 
 
@@ -348,22 +348,29 @@ int main()
 	CreateBVH();
 
 	// Check all of the collisions
-	//CheckCollison(birdObject);
+	CheckCollison(birdObject);
 
 	auto t1 = std::chrono::high_resolution_clock::now();
 	// Traverse through the bvh, then check objects within that node
-	//RecursiveSearchBVH(birdObject, &bvh[0]);
-	//CheckCollisionsWithinNodes(birdObject);
+	RecursiveSearchBVH(birdObject, bvh[0]);
+	CheckCollisionsWithinNodes(birdObject);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
 	bvhRecursive_timeInMs += time.count();
 
+	// DEBUG ONLY - manually check all collisions to compare with bvh
+	for (GameObject* object : tempCollisions)
+	{
+		LOG("DEBUG, object collided with: " + object->name)
+	}
+	LOG("")
 	// Print out objects hit by traversing bvh
 	for (GameObject* object : collidedObjects) 
 	{
-		std::cout << "Object collided with: " << object->name << "\n";
+		std::cout << "BVH, Object collided with: " << object->name << "\n";
 	}
+	LOG("")
 
 	std::cout << "Size of Full Search collisionQueue: " << tempCollisions.size() << std::endl;
 	std::cout << "Full Search time to complete : " << fullSearch_timeInMs << "ms" << std::endl;
