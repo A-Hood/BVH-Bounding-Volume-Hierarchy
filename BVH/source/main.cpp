@@ -86,11 +86,19 @@ struct Node {
 		bbVisual.setFillColor(sf::Color(0, 0, 0, 0));
 	}
 	// Define the previous nodes and child nodes
-	void CreateLink(Node* _previousNode, Node* _childA, Node* _childB)
+	void DefineChildA(Node* _childA)
 	{
-		previousNode = _previousNode;
-		childA = _childA;
-		childB = _childB;
+		this->childA = _childA;
+	}
+
+	void DefineChildB(Node* _childB)
+	{
+		this->childB = _childB;
+	}
+
+	void DefineParentNode(Node* _parentNode)
+	{
+		this->previousNode = _parentNode;
 	}
 
 	Node* previousNode = nullptr;
@@ -163,12 +171,12 @@ void CheckCollison(FloatRect collisionBox)
 }
 
 size_t printCounter = 0;
-void PrintGameObjectNames()
+void PrintGameObjectNames(std::vector<GameObject*> myVec)
 {
 	LOG("-------------- Printing objects, counter: " + std::to_string(printCounter) + " --------------")
-	for (const GameObject& object : gameObjects)
+	for (GameObject* object : myVec)
 	{
-		LOG(object.name)
+		LOG(object->name)
 	}
 	LOG("-------------- Printing objects end --------------")
 	printCounter++;
@@ -181,23 +189,82 @@ void OrganiseGameObjects()
 	std::sort(gameObjects.begin(), gameObjects.end());
 }
 
+std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVector)
+{
+	std::vector<GameObject*> newVector;
+	for (GameObject& object : gameObjectVector)
+	{
+		newVector.push_back(&object);
+	}
+	return newVector;
+}
 
+void CreateNewNode(Node* currentNode)
+{
+	// End node creation if the number of objects in the current node is 2 or less
+	if (currentNode->gameObjects.size() <= 2)
+	{
+		// This node is now a leaf node
+		return;
+	}
+
+	Node* childA = new Node();		// ChildA
+	bvh.emplace_back(*childA);
+	currentNode->DefineChildA(childA);
+
+	Node* childB = new Node();		// ChildB
+	bvh.emplace_back(*childB);
+	currentNode->DefineChildB(childB);
+
+	// Assign parent node of both children
+	currentNode->childA->DefineParentNode(currentNode);
+	currentNode->childB->DefineParentNode(currentNode);
+
+	// Divide and conqour
+	size_t midPoint = currentNode->gameObjects.size() / 2;
+	std::vector<GameObject*> leftSide = {currentNode->gameObjects.begin(), currentNode->gameObjects.begin() + midPoint};
+	std::vector<GameObject*> rightSide = {currentNode->gameObjects.begin() + midPoint, currentNode->gameObjects.end()};
+
+	// Define objects in the next node
+	currentNode->childA->DefineGameObjects(leftSide);
+	currentNode->childB->DefineGameObjects(rightSide);
+
+	// Recurse to child nodes
+	CreateNewNode(currentNode->childA);
+	CreateNewNode(currentNode->childB);
+}
+
+void CalculateNodeBounds(Node* currentNode)
+{
+	
+}
 
 
 void CreateBVH()
 {
 	/* Steps to create a BVH
 	 * 1. Organise the objects in the vector from smallest x to largest x - done
-	 * 2. Create a master node which contains a vector of GameObject pointers
+	 * 2. Create a master node which contains a vector of GameObject pointers - done
 	 * 3. Start recursion by passing in the master node
-	 * 4. Create two nodes
-	 * 5. Assign the two new nodes as childA and childB of the current node
-	 * 6. Find the midpoint of the current node vector
-	 * 7. Left side of midpoint goes to childA, while right of midpoint goes to childB
-	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less
-	 * 9. Calculate the bounds of the leaf nodes using the gameObjects
+	 * 4. Create two nodes - done
+	 * 5. Assign the two new nodes as childA and childB of the current node - done
+	 * 6. Find the midpoint of the current node vector - done
+	 * 7. Left side of midpoint goes to childA, while right of midpoint goes to childB - done
+	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less - done
+	 * 9. Calculate the bounds of all nodes using the gameObjects
 	 */
 	OrganiseGameObjects();
+
+	// Create master node
+	Node* masterNode = new Node();
+	bvh.emplace_back(*masterNode);
+	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
+
+	// Start creating bvh
+	CreateNewNode(masterNode);
+
+	// Calculate the bounds of all the nodes
+
 
 }
 
