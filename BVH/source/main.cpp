@@ -51,11 +51,6 @@ struct GameObject {
 		bbVisual.setFillColor(sf::Color(rR, rG, rB));
 	}
 
-	bool operator<(const GameObject& externalObj)
-	{
-		return this->boundingBox.left < externalObj.boundingBox.left;
-	}
-
 	std::string name;
 	FloatRect boundingBox;
 	sf::RectangleShape bbVisual;
@@ -100,13 +95,34 @@ struct Node {
 		this->previousNode = _parentNode;
 	}
 
+	void DefineDepth(size_t _depth)
+	{
+		this->depth = _depth;
+	}
+
+	void ChangeVisibility(size_t currentDepth)
+	{
+		if (currentDepth == depth)
+		{
+			bbVisual.setOutlineColor(sf::Color::Red);
+		}
+		else
+		{
+			bbVisual.setOutlineColor(sf::Color::Transparent);
+		}
+	}
+
 	Node* previousNode = nullptr;
 	Node* childA = nullptr;
 	Node* childB = nullptr;
 
 	std::vector<GameObject*> gameObjects;
 	FloatRect boundingBox;
+
+	// DEBUG
 	sf::RectangleShape bbVisual;
+	size_t depth = 1;
+
 };
 
 std::vector<GameObject> gameObjects;
@@ -123,10 +139,19 @@ FloatRect birdObject = {90, 128, 32, 32};
 std::vector<Node*> collidedNodes;		// Each bird in angry birds will have this
 std::vector<GameObject*> collidedObjects;
 
+int RandomGen(size_t minValue, size_t maxValue)
+{
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dist(minValue, maxValue);
+	return dist(gen);
+}
+
 // Example of GameObjects within an application
 void CreateGameObjects()
 {
-	// Creation of example obbjects
+	// Creation of example objects
+	/*
 	gameObjects.emplace_back("circle", FloatRect(0, 0, 64, 64));
 	gameObjects.emplace_back("chair", FloatRect(119, 0, 64, 64));
 	gameObjects.emplace_back("dino", FloatRect(280 * 2.2f, 0, 64, 64));
@@ -135,6 +160,25 @@ void CreateGameObjects()
 	gameObjects.emplace_back("jockey", FloatRect(107, 128, 64, 64));
 	gameObjects.emplace_back("frog", FloatRect(230, 128 * 3.17f, 64, 64));
 	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
+	*/
+	/*
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 1), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 2), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 5), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 3), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 4), 64, 64));
+	*/
+
+	for (int y = 0; y < 5; y++)
+	{
+		for (int x = 0; x < 5; x++)
+		{
+			int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
+			int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
+
+			gameObjects.emplace_back("thing", FloatRect(randomX, randomY, 64, 64));
+		}
+	}
 }
 
 bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
@@ -181,12 +225,42 @@ void PrintGameObjectNames(std::vector<GameObject*> myVec)
 	printCounter++;
 }
 
-// BVH Stuff ------------------------------------------------------------------------------------------------------------------------
+// Sorting algorithms ----------------------------------------------------------------------------------------------------------------
 
-void OrganiseGameObjects()
+
+
+bool InitSortComparison(const GameObject& objectA, const GameObject& objectB)
 {
-	std::sort(gameObjects.begin(), gameObjects.end());
+	return objectA.boundingBox.left < objectB.boundingBox.left;
 }
+void InitObjectSort()
+{
+	std::sort(gameObjects.begin(), gameObjects.end(), InitSortComparison);
+}
+
+bool VerticalComparison(const GameObject* objectA, const GameObject* objectB)
+{
+	return objectA->boundingBox.top < objectB->boundingBox.top;
+}
+bool HorizontalComparison(const GameObject* objectA, const GameObject* objectB)
+{
+	return objectA->boundingBox.left < objectB->boundingBox.left;
+}
+
+void BVHySort(std::vector<GameObject*>& unsortedVector)
+{
+	std::sort(unsortedVector.begin(), unsortedVector.end(), VerticalComparison);
+}
+void BVHxSort(std::vector<GameObject*>& unsortedVector)
+{
+	std::sort(unsortedVector.begin(), unsortedVector.end(), HorizontalComparison);
+}
+
+
+
+
+
+// BVH Stuff ------------------------------------------------------------------------------------------------------------------------
 
 std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVector)
 {
@@ -198,10 +272,12 @@ std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVe
 	return newVector;
 }
 
-void CreateNewNode(Node* currentNode)
+void CreateNewNode(Node* currentNode, size_t currentDepth)
 {
-	// End node creation if the number of objects in the current node is 2 or less
-	if (currentNode->gameObjects.size() <= 2)
+	// DEBUG
+	currentNode->DefineDepth(currentDepth);
+	// End node creation if the number of objects in the current node is 3 or less
+	if (currentNode->gameObjects.size() <= 3)
 	{
 		// This node is now a leaf node
 		return;
@@ -219,8 +295,18 @@ void CreateNewNode(Node* currentNode)
 	currentNode->childA->DefineParentNode(currentNode);
 	currentNode->childB->DefineParentNode(currentNode);
 
-	// Divide and conqour
+	// Debug
+	BVHxSort(currentNode->gameObjects);
+	// Find the  midpoint
 	size_t midPoint = currentNode->gameObjects.size() / 2;
+	if (currentNode->gameObjects[midPoint - 1]->boundingBox.left == currentNode->gameObjects[midPoint + 1]->boundingBox.left)
+	{
+		// Organise the objects from smallest y to largest y
+		BVHySort(currentNode->gameObjects);
+		// Recalculate the midpoint
+		midPoint = currentNode->gameObjects.size() / 2;
+	}
+
 	std::vector<GameObject*> leftSide = {currentNode->gameObjects.begin(), currentNode->gameObjects.begin() + midPoint};
 	std::vector<GameObject*> rightSide = {currentNode->gameObjects.begin() + midPoint, currentNode->gameObjects.end()};
 
@@ -229,25 +315,42 @@ void CreateNewNode(Node* currentNode)
 	currentNode->childB->DefineGameObjects(rightSide);
 
 	// Recurse to child nodes
-	CreateNewNode(currentNode->childA);
-	CreateNewNode(currentNode->childB);
+	CreateNewNode(currentNode->childA, currentDepth + 1);
+	CreateNewNode(currentNode->childB, currentDepth + 1);
 }
 
 void CalculateNodeBounds(Node* currentNode)
 {
-	// We know the smallest and largest x as those are at the start and end of the vector
-	float smallestX = currentNode->gameObjects.front()->boundingBox.left;
+	// Fill in the values of the back object in the current node
+	float smallestX = currentNode->gameObjects.back()->boundingBox.left;
 	float largestX = currentNode->gameObjects.back()->boundingBox.left + currentNode->gameObjects.back()->boundingBox.width;
 
-	// Ensure there are default values
-	float smallestY = currentNode->boundingBox.top;
-	float largestY = currentNode->boundingBox.top + currentNode->boundingBox.height;
+	float smallestY = currentNode->gameObjects.back()->boundingBox.top;
+	float largestY = currentNode->gameObjects.back()->boundingBox.top + currentNode->gameObjects.back()->boundingBox.height;
 
-	// Find smallest and largest Y values
+	// Find smallest and largest X and Y values
 	for (GameObject* object : currentNode->gameObjects)
 	{
-		smallestY = std::min(object->boundingBox.top, smallestY);
-		largestY = std::max(object->boundingBox.top + object->boundingBox.height, largestY);
+		// Smallest X
+		if (object->boundingBox.left < smallestX)
+		{
+			smallestX = object->boundingBox.left;
+		}
+		// Largest X
+		if (object->boundingBox.left + object->boundingBox.width > largestX)
+		{
+			largestX = object->boundingBox.left + object->boundingBox.width;
+		}
+		// Smallest Y
+		if (object->boundingBox.top < smallestY)
+		{
+			smallestY = object->boundingBox.top;
+		}
+		// Largest Y
+		if (object->boundingBox.top + object->boundingBox.height > largestY)
+		{
+			largestY = object->boundingBox.top + object->boundingBox.height;
+		}
 	}
 
 	currentNode->DefineBounds(smallestX, smallestY, largestX - smallestX, largestY - smallestY);
@@ -273,12 +376,19 @@ void CreateBVH()
 	 * 4. Create two nodes - done
 	 * 5. Assign the two new nodes as childA and childB of the current node - done
 	 * 6. Find the midpoint of the current node vector - done
-	 * 7. Left side of midpoint goes to childA, while right of midpoint goes to childB - done
-	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 2 or less - done
+	 * 7. Check if either side of the midpoint has the same x value
+	 *  Case false:
+	 * 7.a.1. Left side of midpoint goes to childA, while right of midpoint goes to childB - done
+	 * Case true:
+	 * 7.b.1. Organise current vector from smallest y to largest y
+	 * 7.b.2. Find the midpoint of the current vector
+	 * 7.b.3. Left side of the midpoint goes to childA, while right of midpoint goes to childB
+	 *
+	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 3 or less - done
 	 * 9. Calculate the bounds of all nodes using the gameObjects
 	 */
 	auto t1 = std::chrono::high_resolution_clock::now();
-	OrganiseGameObjects();
+	InitObjectSort();
 
 	// Create master node
 	Node* masterNode = new Node();
@@ -286,7 +396,7 @@ void CreateBVH()
 	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
 
 	// Start creating bvh
-	CreateNewNode(masterNode);
+	CreateNewNode(masterNode, 1);
 
 	// Calculate the bounds of all the nodes
 	CalculateNodeBounds(masterNode);
@@ -338,6 +448,7 @@ void CheckCollisionsWithinNodes(FloatRect boundingBox)
 }
 
 
+size_t currentDepth = 0;
 int main()
 {
 	/* Seed random */
@@ -378,6 +489,7 @@ int main()
 	std::cout << "BVH Traverse time to complete : " << bvhRecursive_timeInMs << "ms" << std::endl;
 
 	sf::RenderWindow window(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
+	window.setKeyRepeatEnabled(false);
 
 	while (window.isOpen())
 	{
@@ -386,6 +498,21 @@ int main()
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
+
+
+			if (event.type == sf::Event::KeyPressed)
+			{
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+				{
+					currentDepth++;
+					LOG(currentDepth)
+				}
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+				{
+					currentDepth--;
+					LOG(currentDepth)
+				}
+			}
 		}
 
 		window.clear();
@@ -397,6 +524,7 @@ int main()
 		/* BVH Visualisation */
 		for (auto node : bvh) {
 			window.draw(node->bbVisual);
+			node->ChangeVisibility(currentDepth);
 		}
 
 		window.display();
