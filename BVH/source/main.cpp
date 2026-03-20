@@ -65,12 +65,12 @@ struct Node {
 		gameObjects = std::move(gameObjectsInNode);
 	}
 	// Bounds of the Node
-	void DefineBounds(float _left, float _top, float _width, float _height)
+	void DefineBounds(FloatRect boundingBox)
 	{
-		boundingBox.left = _left;
-		boundingBox.top = _top;
-		boundingBox.width = _width;
-		boundingBox.height = _height;
+		boundingBox.left = boundingBox.left;
+		boundingBox.top = boundingBox.top;
+		boundingBox.width = boundingBox.width;
+		boundingBox.height = boundingBox.height;
 
 		/* SFML Stuff */
 		bbVisual.setPosition(boundingBox.left, boundingBox.top);
@@ -169,7 +169,7 @@ void CreateGameObjects()
 	*/
 
 
-	for (int x = 0; x < 5000; x++)
+	for (int x = 0; x < 25; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
@@ -270,152 +270,117 @@ std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVe
 	return newVector;
 }
 
-void CreateNewNode(Node* currentNode, size_t currentDepth)
+FloatRect CalculateBoundingBox(const std::vector<GameObject>& nodeVector)
+{
+	// Fill in the values of the back object in the current node
+	float smallestX = nodeVector.back().boundingBox.left;
+	float largestX = nodeVector.back().boundingBox.left + nodeVector.back().boundingBox.width;
+
+	float smallestY = nodeVector.back().boundingBox.top;
+	float largestY = nodeVector.back().boundingBox.top + nodeVector.back().boundingBox.height;
+
+	// Find smallest and largest X and Y values
+	for (const GameObject& object : nodeVector)
+	{
+		// Smallest X
+		if (object.boundingBox.left < smallestX)
+		{
+			smallestX = object.boundingBox.left;
+		}
+		// Largest X
+		if (object.boundingBox.left + object.boundingBox.width > largestX)
+		{
+			largestX = object.boundingBox.left + object.boundingBox.width;
+		}
+		// Smallest Y
+		if (object.boundingBox.top < smallestY)
+		{
+			smallestY = object.boundingBox.top;
+		}
+		// Largest Y
+		if (object.boundingBox.top + object.boundingBox.height > largestY)
+		{
+			largestY = object.boundingBox.top + object.boundingBox.height;
+		}
+	}
+	
+	return {smallestX, smallestY, largestX - smallestX, largestY - smallestY};
+}
+
+bool CheckXLongestSide(FloatRect boundingBox)
+{
+	// True: X is the longest side
+	// False: Y is the longest side
+
+	return boundingBox.width > boundingBox.height;
+}
+
+void CreateNewNode(Node* currentNode, const std::vector<GameObject>& nodeVector, size_t currentDepth)
 {
 	// DEBUG
 	currentNode->DefineDepth(currentDepth);
-	// End node creation if the number of objects in the current node is 3 or less
-	if (currentNode->gameObjects.size() <= 3)
+
+	// Return if the number of game objects is 3 or less
+	if (nodeVector.size() <= 3)
 	{
-		// This node is now a leaf node
 		return;
 	}
+	// Calculate the bounding box
+	FloatRect boundingBox = CalculateBoundingBox(nodeVector);
+	currentNode->DefineBounds(boundingBox);
 
-	Node* childA = new Node();		// ChildA
-	bvh.emplace_back(childA);
-	currentNode->DefineChildA(childA);
+	// Create empty vectors
+	std::vector<GameObject> leftSide;
+	std::vector<GameObject> rightSide;
 
-	Node* childB = new Node();		// ChildB
-	bvh.emplace_back(childB);
-	currentNode->DefineChildB(childB);
-
-	// Assign parent node of both children
-	currentNode->childA->DefineParentNode(currentNode);
-	currentNode->childB->DefineParentNode(currentNode);
-
-	// Debug
-	BVHxSort(currentNode->gameObjects);
-	// Find the  midpoint
-	size_t midPoint = currentNode->gameObjects.size() / 2;
+	float midPoint;		// Can represent either on the x or the y
+	bool xIsTheLongest = true;
+	if (CheckXLongestSide(boundingBox))
+	{
+		// Width is the longest side
+		midPoint = boundingBox.width / 2;
+	}
+	else
+	{
+		// Height is the longest side
+		midPoint = boundingBox.height / 2;
+		xIsTheLongest = false;
+	}
 	
-	if (std::abs(currentNode->gameObjects[midPoint - 1]->boundingBox.left - currentNode->gameObjects[midPoint + 1]->boundingBox.left) <= 1)
+	for (const GameObject& object : nodeVector)
 	{
-		// Organise the objects from smallest y to largest y
-		BVHySort(currentNode->gameObjects);
-		// Recalculate the midpoint
-		midPoint = currentNode->gameObjects.size() / 2;
+		// Calculate the midpoint of the object
+		float midPointX = object.boundingBox.left + (object.boundingBox.width / 2);
+		float midPointY = object.boundingBox.top + (object.boundingBox.height / 2);
+
+		
 	}
-
-	std::vector<GameObject*> leftSide = {currentNode->gameObjects.begin(), currentNode->gameObjects.begin() + midPoint};
-	std::vector<GameObject*> rightSide = {currentNode->gameObjects.begin() + midPoint, currentNode->gameObjects.end()};
-
-	// Define objects in the next node
-	currentNode->childA->DefineGameObjects(leftSide);
-	currentNode->childB->DefineGameObjects(rightSide);
-
-	// Recurse to child nodes
-	CreateNewNode(currentNode->childA, currentDepth + 1);
-	CreateNewNode(currentNode->childB, currentDepth + 1);
-}
-
-void CalculateNodeBounds(Node* currentNode)
-{
-	// Fill in the values of the back object in the current node
-	int smallestX = currentNode->gameObjects.back()->boundingBox.left;
-	int largestX = currentNode->gameObjects.back()->boundingBox.left + currentNode->gameObjects.back()->boundingBox.width;
-
-	int smallestY = currentNode->gameObjects.back()->boundingBox.top;
-	int largestY = currentNode->gameObjects.back()->boundingBox.top + currentNode->gameObjects.back()->boundingBox.height;
-
-	// Find smallest and largest X and Y values
-	for (GameObject* object : currentNode->gameObjects)
-	{
-		// Smallest X
-		if (object->boundingBox.left < smallestX)
-		{
-			smallestX = object->boundingBox.left;
-		}
-		// Largest X
-		if (object->boundingBox.left + object->boundingBox.width > largestX)
-		{
-			largestX = object->boundingBox.left + object->boundingBox.width;
-		}
-		// Smallest Y
-		if (object->boundingBox.top < smallestY)
-		{
-			smallestY = object->boundingBox.top;
-		}
-		// Largest Y
-		if (object->boundingBox.top + object->boundingBox.height > largestY)
-		{
-			largestY = object->boundingBox.top + object->boundingBox.height;
-		}
-	}
-
-	currentNode->DefineBounds(smallestX, smallestY, largestX - smallestX, largestY - smallestY);
-
-	if (currentNode->childA != nullptr)
-	{
-		CalculateNodeBounds(currentNode->childA);
-	}
-	if (currentNode->childB != nullptr)
-	{
-		CalculateNodeBounds(currentNode->childB);
-	}
-
+	
 }
 
 
 void CreateBVH()
 {
-	/* Steps to create a BVH
-	 * 1. Organise the objects in the vector from smallest x to largest x - done
-	 * 2. Create a master node which contains a vector of GameObject pointers - done
-	 * 3. Start recursion by passing in the master node
-	 * 4. Create two nodes - done
-	 * 5. Assign the two new nodes as childA and childB of the current node - done
-	 * 6. Find the midpoint of the current node vector - done
-	 * 7. Check if either side of the midpoint has the same x value
-	 *  Case false:
-	 * 7.a.1. Left side of midpoint goes to childA, while right of midpoint goes to childB - done
-	 * Case true:
-	 * 7.b.1. Organise current vector from smallest y to largest y
-	 * 7.b.2. Find the midpoint of the current vector
-	 * 7.b.3. Left side of the midpoint goes to childA, while right of midpoint goes to childB
-	 *
-	 * 8. Repeat steps 4 to 8 using recursion until the number of gameObjects in that node is 3 or less - done
-	 * 9. Calculate the bounds of all nodes using the gameObjects
+	/* 1. Create master node
+	 * 2. All the objects in the list belong to the master node
+	 * 3. Start the recursion
+	 * 4. Go through the list to find the smallest x and y, largest x and y. Calculate the bounds 
+	 * 5. Create two vectors called left and right. They are empty
+	 * 6. Find the longest side, x or y
+	 * 7. Start a foreach loop of the game objects
+	 * 8. Calculate the midpoint of the object
+	 * 9. If the x is the longest side: check if the x of the midpoint is less than the midpoint of the current box, therefore it will be on the left side. Else the object is on the right side. 
+	 * 10. If on the left, move object to the left vector. Else move the object to the right vector
+	 * 11. If the y is the longest side: check if the y of the midpoint is less than the midpoint of the current box, therefore it will be on the left side. Else the object is on the right side.
+	 * 12. If on the left, move object to the left vector. Else move the object to the right vector
+	 * 13. Create child node A and B
+	 * 14. Left vec goes to childA, right vec goes to childB
 	 */
-	auto t1 = std::chrono::high_resolution_clock::now();
-	InitObjectSort();
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	LOG("Time to complete init sort: " + std::to_string(time.count()) + "ms")
-
-	// Create master node
+	
 	Node* masterNode = new Node();
 	bvh.emplace_back(masterNode);
-	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
-
-	// Start creating bvh
-	t1 = std::chrono::high_resolution_clock::now();
-
-	CreateNewNode(masterNode, 1);
-
-	t2 = std::chrono::high_resolution_clock::now();
-	time = t2 - t1;
-	LOG("Time to complete bvh creation: " + std::to_string(time.count()) + "ms")
-
-	// Calculate the bounds of all the nodes
-	t1 = std::chrono::high_resolution_clock::now();
-
-	CalculateNodeBounds(masterNode);
-
-	t2 = std::chrono::high_resolution_clock::now();
-	time = t2 - t1;
-	LOG("Time to complete bvh bounds: " + std::to_string(time.count()) + "ms")
-
-	LOG("Size of bhv: " + std::to_string(bvh.size()))
+	CreateNewNode(masterNode, gameObjects, 1);
+	
 }
 
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
@@ -466,7 +431,7 @@ int main()
 
 	auto t1 = std::chrono::high_resolution_clock::now();
 	// Traverse through the bvh, then check objects within that node
-	RecursiveSearchBVH(birdObject, bvh[0]);
+	//RecursiveSearchBVH(birdObject, bvh[0]);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
