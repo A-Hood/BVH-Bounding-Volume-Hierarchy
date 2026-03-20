@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <charconv>
 #include <chrono>
 #include <iostream>
 #include <sstream>
@@ -39,7 +40,7 @@ struct FloatRect {
 
 struct GameObject {
 	GameObject() = default;
-	GameObject(const char* _name, FloatRect _boundingBox) {
+	GameObject(std::string _name, FloatRect _boundingBox) {
 		name = _name;
 		boundingBox = _boundingBox;
 
@@ -53,7 +54,7 @@ struct GameObject {
 		bbVisual.setFillColor(sf::Color(rR, rG, rB));
 	}
 
-	const char* name;
+	std::string name;
 	FloatRect boundingBox;
 	sf::RectangleShape bbVisual;
 };
@@ -65,12 +66,12 @@ struct Node {
 		gameObjects = gameObjectsInNode;
 	}
 	// Bounds of the Node
-	void DefineBounds(FloatRect boundingBox)
+	void DefineBounds(FloatRect _boundingBox)
 	{
-		boundingBox.left = boundingBox.left;
-		boundingBox.top = boundingBox.top;
-		boundingBox.width = boundingBox.width;
-		boundingBox.height = boundingBox.height;
+		boundingBox.left = _boundingBox.left;
+		boundingBox.top = _boundingBox.top;
+		boundingBox.width = _boundingBox.width;
+		boundingBox.height = _boundingBox.height;
 
 		/* SFML Stuff */
 		bbVisual.setPosition(boundingBox.left, boundingBox.top);
@@ -135,7 +136,7 @@ std::vector<Node*> bvh;
  */
 std::vector<GameObject*> tempCollisions;
 
-FloatRect birdObject = {0, 0, 32, 32};
+FloatRect birdObject = {1700, 0, 32, 32};
 std::vector<GameObject*> collidedObjects;
 
 int RandomGen(size_t minValue, size_t maxValue)
@@ -168,16 +169,16 @@ void CreateGameObjects()
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 5), 64, 64));
 	*/
 
-	/*
 	for (int x = 0; x < 5000; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
-		gameObjects.emplace_back("thing", FloatRect(randomX, randomY, 64, 64));
+		gameObjects.emplace_back("obj_" + std::to_string(x), FloatRect(randomX, randomY, 64, 64));
 	}
-	*/
 
+
+	/*
 	for (int y = 0; y < 10; y++)
 	{
 		for (int x = 0; x < 10; x++)
@@ -185,6 +186,7 @@ void CreateGameObjects()
 			gameObjects.emplace_back("thing", FloatRect(10 + (x * 90), 10 + (y * 90), 64, 64));
 		}
 	}
+	*/
 	
 }
 
@@ -327,7 +329,7 @@ void CreateNewNode(Node* currentNode, size_t currentDepth)
 	currentNode->DefineBounds(boundingBox);
 
 	// Return if the number of game objects is 3 or less
-	if (currentNode->gameObjects.size() <= 3)
+	if (currentNode->gameObjects.size() <= 3 || currentDepth >= 8)
 	{
 		return;
 	}
@@ -399,24 +401,20 @@ void CreateBVH()
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
 	LOG("Time to create BVH: " + std::to_string(time.count()) + "ms")
-
 }
 
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
 void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode) 
 {
-	// Do not continue if this node is a nullptr
-	if (currentNode == nullptr)
-	{
-		return;
-	}
 	// If the searchRect is not within this current node, do not proceed
 	if (!BoxBoxCollision(searchRect, currentNode->boundingBox))
 	{
 		return;
 	}
-	// Go to child nodes if there are more than 2 objects in this current node
-	if (currentNode->gameObjects.size() > 2)
+	// If the child nodes are a nullptr, therefore this is the leaf node.
+	// Check objects within the leaf node
+	// Else if this is not a leaf node, recurse
+	if (currentNode->childA != nullptr && currentNode->childB != nullptr)
 	{
 		RecursiveSearchBVH(searchRect, currentNode->childA);
 		RecursiveSearchBVH(searchRect, currentNode->childB);
@@ -450,11 +448,11 @@ int main()
 
 	auto t1 = std::chrono::high_resolution_clock::now();
 	// Traverse through the bvh, then check objects within that node
-	//RecursiveSearchBVH(birdObject, bvh[0]);
+	RecursiveSearchBVH(birdObject, bvh[0]);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
-	bvhRecursive_timeInMs += time.count();
+	bvhRecursive_timeInMs = time.count();
 
 	// DEBUG ONLY - manually check all collisions to compare with bvh
 	for (GameObject* object : tempCollisions)
@@ -477,6 +475,10 @@ int main()
 	sf::RenderWindow window(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
 	window.setKeyRepeatEnabled(false);
 
+	for (auto node : bvh) {
+		node->ChangeVisibility(currentDepth);
+	}
+
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -491,11 +493,17 @@ int main()
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 				{
 					currentDepth++;
+					for (auto node : bvh) {
+						node->ChangeVisibility(currentDepth);
+					}
 					LOG(currentDepth)
 				}
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 				{
 					currentDepth--;
+					for (auto node : bvh) {
+						node->ChangeVisibility(currentDepth);
+					}
 					LOG(currentDepth)
 				}
 			}
@@ -510,8 +518,6 @@ int main()
 		/* BVH Visualisation */
 		for (auto node : bvh) {
 			window.draw(node->bbVisual);
-			node->ChangeVisibility(currentDepth);
-
 		}
 
 		window.display();
