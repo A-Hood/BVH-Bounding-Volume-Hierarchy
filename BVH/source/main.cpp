@@ -62,7 +62,7 @@ struct Node {
 	// Defines GameObjects within that node
 	void DefineGameObjects(std::vector<GameObject*> gameObjectsInNode)
 	{
-		gameObjects = std::move(gameObjectsInNode);
+		gameObjects = gameObjectsInNode;
 	}
 	// Bounds of the Node
 	void DefineBounds(FloatRect boundingBox)
@@ -161,21 +161,22 @@ void CreateGameObjects()
 	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
 	*/
 	/*
-	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 1), 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 2), 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 5), 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 3), 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 4), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 1), 20, 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 2), 20, 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 3), 20, 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 4), 20, 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 5), 20, 64, 64));
 	*/
 
 
-	for (int x = 0; x < 25; x++)
+	for (int x = 0; x < 5000; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
 		gameObjects.emplace_back("thing", FloatRect(randomX, randomY, 64, 64));
 	}
+
 	
 }
 
@@ -270,37 +271,37 @@ std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVe
 	return newVector;
 }
 
-FloatRect CalculateBoundingBox(const std::vector<GameObject>& nodeVector)
+FloatRect CalculateBoundingBox(const std::vector<GameObject*>& nodeVector)
 {
 	// Fill in the values of the back object in the current node
-	float smallestX = nodeVector.back().boundingBox.left;
-	float largestX = nodeVector.back().boundingBox.left + nodeVector.back().boundingBox.width;
+	float smallestX = nodeVector.back()->boundingBox.left;
+	float largestX = nodeVector.back()->boundingBox.left + nodeVector.back()->boundingBox.width;
 
-	float smallestY = nodeVector.back().boundingBox.top;
-	float largestY = nodeVector.back().boundingBox.top + nodeVector.back().boundingBox.height;
+	float smallestY = nodeVector.back()->boundingBox.top;
+	float largestY = nodeVector.back()->boundingBox.top + nodeVector.back()->boundingBox.height;
 
 	// Find smallest and largest X and Y values
-	for (const GameObject& object : nodeVector)
+	for (GameObject* object : nodeVector)
 	{
 		// Smallest X
-		if (object.boundingBox.left < smallestX)
+		if (object->boundingBox.left < smallestX)
 		{
-			smallestX = object.boundingBox.left;
+			smallestX = object->boundingBox.left;
 		}
 		// Largest X
-		if (object.boundingBox.left + object.boundingBox.width > largestX)
+		if (object->boundingBox.left + object->boundingBox.width > largestX)
 		{
-			largestX = object.boundingBox.left + object.boundingBox.width;
+			largestX = object->boundingBox.left + object->boundingBox.width;
 		}
 		// Smallest Y
-		if (object.boundingBox.top < smallestY)
+		if (object->boundingBox.top < smallestY)
 		{
-			smallestY = object.boundingBox.top;
+			smallestY = object->boundingBox.top;
 		}
 		// Largest Y
-		if (object.boundingBox.top + object.boundingBox.height > largestY)
+		if (object->boundingBox.top + object->boundingBox.height > largestY)
 		{
-			largestY = object.boundingBox.top + object.boundingBox.height;
+			largestY = object->boundingBox.top + object->boundingBox.height;
 		}
 	}
 	
@@ -314,48 +315,86 @@ bool CheckXLongestSide(FloatRect boundingBox)
 
 	return boundingBox.width > boundingBox.height;
 }
+void AssignObjectSide(std::vector<GameObject*>& leftSide, std::vector<GameObject*>& rightSide, const Node* currentNode, float boundaryMidpoint, bool xIsLongestSide)
+{
+	float objectMidpoint;
 
-void CreateNewNode(Node* currentNode, const std::vector<GameObject>& nodeVector, size_t currentDepth)
+	for (GameObject* object : currentNode->gameObjects)
+	{
+		// Calculate the midpoint of the object
+		if (xIsLongestSide)
+		{
+			objectMidpoint = object->boundingBox.left + (object->boundingBox.width / 2);
+		}
+		else
+		{
+			objectMidpoint = object->boundingBox.top + (object->boundingBox.height / 2);
+		}
+
+		if (objectMidpoint < boundaryMidpoint)
+		{
+			// Object is moved to the left side
+			leftSide.push_back(object);
+		}
+		else
+		{
+			// Object is moved to the right side
+			rightSide.push_back(object);
+		}
+	}
+}
+
+
+void CreateNewNode(Node* currentNode, size_t currentDepth)
 {
 	// DEBUG
 	currentNode->DefineDepth(currentDepth);
+	// Calculate the bounding box
+	FloatRect boundingBox = CalculateBoundingBox(currentNode->gameObjects);
+	currentNode->DefineBounds(boundingBox);
 
 	// Return if the number of game objects is 3 or less
-	if (nodeVector.size() <= 3)
+	if (currentNode->gameObjects.size() <= 3)
 	{
 		return;
 	}
-	// Calculate the bounding box
-	FloatRect boundingBox = CalculateBoundingBox(nodeVector);
-	currentNode->DefineBounds(boundingBox);
 
 	// Create empty vectors
-	std::vector<GameObject> leftSide;
-	std::vector<GameObject> rightSide;
+	std::vector<GameObject*> leftSide;
+	std::vector<GameObject*> rightSide;
 
-	float midPoint;		// Can represent either on the x or the y
-	bool xIsTheLongest = true;
+	float boundaryMidpoint;		// Can represent either on the x or the y
 	if (CheckXLongestSide(boundingBox))
 	{
 		// Width is the longest side
-		midPoint = boundingBox.width / 2;
+		boundaryMidpoint = boundingBox.left + (boundingBox.width / 2);
+		AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint, true);
 	}
 	else
 	{
 		// Height is the longest side
-		midPoint = boundingBox.height / 2;
-		xIsTheLongest = false;
+		boundaryMidpoint = boundingBox.top + (boundingBox.height / 2);
+		AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint, false);
 	}
 	
-	for (const GameObject& object : nodeVector)
-	{
-		// Calculate the midpoint of the object
-		float midPointX = object.boundingBox.left + (object.boundingBox.width / 2);
-		float midPointY = object.boundingBox.top + (object.boundingBox.height / 2);
+	Node* childA = new Node();
+	bvh.emplace_back(childA);
+	currentNode->DefineChildA(childA);
 
-		
-	}
-	
+	Node* childB = new Node();
+	bvh.emplace_back(childB);
+	currentNode->DefineChildB(childB);
+
+	// Define parents
+	currentNode->childA->DefineParentNode(currentNode);
+	currentNode->childB->DefineParentNode(currentNode);
+
+	currentNode->childA->DefineGameObjects(leftSide);
+	currentNode->childB->DefineGameObjects(rightSide);
+
+	CreateNewNode(currentNode->childA, currentDepth + 1);
+	CreateNewNode(currentNode->childB, currentDepth + 1);
+
 }
 
 
@@ -376,11 +415,18 @@ void CreateBVH()
 	 * 13. Create child node A and B
 	 * 14. Left vec goes to childA, right vec goes to childB
 	 */
-	
+
+	auto t1 = std::chrono::high_resolution_clock::now();
+
 	Node* masterNode = new Node();
 	bvh.emplace_back(masterNode);
-	CreateNewNode(masterNode, gameObjects, 1);
-	
+	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
+	CreateNewNode(masterNode, 1);
+
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float, std::milli> time = t2 - t1;
+	LOG("Time to create BVH: " + std::to_string(time.count()) + "ms")
+
 }
 
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
@@ -485,13 +531,14 @@ int main()
 		window.clear();
 
 		/* Objects Visualisation */
-		for (auto go : gameObjects) {
+		for (const auto& go : gameObjects) {
 		    window.draw(go.bbVisual);
 		}
 		/* BVH Visualisation */
 		for (auto node : bvh) {
 			window.draw(node->bbVisual);
 			node->ChangeVisibility(currentDepth);
+
 		}
 
 		window.display();
