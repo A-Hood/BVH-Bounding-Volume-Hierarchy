@@ -161,14 +161,14 @@ void CreateGameObjects()
 	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
 	*/
 	/*
-	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 1), 20, 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 2), 20, 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 3), 20, 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 4), 20, 64, 64));
-	gameObjects.emplace_back("thing", FloatRect(20 + (90 * 5), 20, 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 1), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 2), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 3), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 4), 64, 64));
+	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 5), 64, 64));
 	*/
 
-
+	/*
 	for (int x = 0; x < 5000; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
@@ -176,7 +176,15 @@ void CreateGameObjects()
 
 		gameObjects.emplace_back("thing", FloatRect(randomX, randomY, 64, 64));
 	}
+	*/
 
+	for (int y = 0; y < 10; y++)
+	{
+		for (int x = 0; x < 10; x++)
+		{
+			gameObjects.emplace_back("thing", FloatRect(10 + (x * 90), 10 + (y * 90), 64, 64));
+		}
+	}
 	
 }
 
@@ -223,40 +231,6 @@ void PrintGameObjectNames(const std::vector<GameObject*>& myVec)
 	LOG("-------------- Printing objects end --------------")
 	printCounter++;
 }
-
-// Sorting algorithms ----------------------------------------------------------------------------------------------------------------
-
-
-
-bool InitSortComparison(const GameObject& objectA, const GameObject& objectB)
-{
-	return objectA.boundingBox.left < objectB.boundingBox.left;
-}
-void InitObjectSort()
-{
-	std::sort(gameObjects.begin(), gameObjects.end(), InitSortComparison);
-}
-
-bool VerticalComparison(const GameObject* objectA, const GameObject* objectB)
-{
-	return objectA->boundingBox.top < objectB->boundingBox.top;
-}
-bool HorizontalComparison(const GameObject* objectA, const GameObject* objectB)
-{
-	return objectA->boundingBox.left < objectB->boundingBox.left;
-}
-
-void BVHySort(std::vector<GameObject*>& unsortedVector)
-{
-	std::sort(unsortedVector.begin(), unsortedVector.end(), VerticalComparison);
-}
-void BVHxSort(std::vector<GameObject*>& unsortedVector)
-{
-	std::sort(unsortedVector.begin(), unsortedVector.end(), HorizontalComparison);
-}
-
-
-
 
 
 // BVH Stuff ------------------------------------------------------------------------------------------------------------------------
@@ -312,8 +286,7 @@ bool CheckXLongestSide(FloatRect boundingBox)
 {
 	// True: X is the longest side
 	// False: Y is the longest side
-
-	return boundingBox.width > boundingBox.height;
+	return boundingBox.width >= boundingBox.height;
 }
 void AssignObjectSide(std::vector<GameObject*>& leftSide, std::vector<GameObject*>& rightSide, const Node* currentNode, float boundaryMidpoint, bool xIsLongestSide)
 {
@@ -334,12 +307,12 @@ void AssignObjectSide(std::vector<GameObject*>& leftSide, std::vector<GameObject
 		if (objectMidpoint < boundaryMidpoint)
 		{
 			// Object is moved to the left side
-			leftSide.push_back(object);
+			leftSide.emplace_back(object);
 		}
 		else
 		{
 			// Object is moved to the right side
-			rightSide.push_back(object);
+			rightSide.emplace_back(object);
 		}
 	}
 }
