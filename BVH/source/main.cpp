@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 #include <random>
 #include <cstdlib>
@@ -37,7 +38,8 @@ struct FloatRect {
 };
 
 struct GameObject {
-	GameObject(std::string _name, FloatRect _boundingBox) {
+	GameObject() = default;
+	GameObject(const char* _name, FloatRect _boundingBox) {
 		name = _name;
 		boundingBox = _boundingBox;
 
@@ -51,18 +53,16 @@ struct GameObject {
 		bbVisual.setFillColor(sf::Color(rR, rG, rB));
 	}
 
-	std::string name;
+	const char* name;
 	FloatRect boundingBox;
 	sf::RectangleShape bbVisual;
 };
 
 struct Node {
-	Node() = default;
-
 	// Defines GameObjects within that node
 	void DefineGameObjects(std::vector<GameObject*> gameObjectsInNode)
 	{
-		gameObjects = gameObjectsInNode;
+		gameObjects = std::move(gameObjectsInNode);
 	}
 	// Bounds of the Node
 	void DefineBounds(float _left, float _top, float _width, float _height)
@@ -135,8 +135,7 @@ std::vector<Node*> bvh;
  */
 std::vector<GameObject*> tempCollisions;
 
-FloatRect birdObject = {90, 128, 32, 32};
-std::vector<Node*> collidedNodes;		// Each bird in angry birds will have this
+FloatRect birdObject = {0, 0, 32, 32};
 std::vector<GameObject*> collidedObjects;
 
 int RandomGen(size_t minValue, size_t maxValue)
@@ -169,16 +168,15 @@ void CreateGameObjects()
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 4), 64, 64));
 	*/
 
-	for (int y = 0; y < 5; y++)
-	{
-		for (int x = 0; x < 5; x++)
-		{
-			int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
-			int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
-			gameObjects.emplace_back("thing", FloatRect(randomX, randomY, 64, 64));
-		}
+	for (int x = 0; x < 5000; x++)
+	{
+		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
+		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
+
+		gameObjects.emplace_back("thing", FloatRect(randomX, randomY, 64, 64));
 	}
+	
 }
 
 bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
@@ -214,7 +212,7 @@ void CheckCollison(FloatRect collisionBox)
 }
 
 size_t printCounter = 0;
-void PrintGameObjectNames(std::vector<GameObject*> myVec)
+void PrintGameObjectNames(const std::vector<GameObject*>& myVec)
 {
 	LOG("-------------- Printing objects, counter: " + std::to_string(printCounter) + " --------------")
 	for (GameObject* object : myVec)
@@ -299,7 +297,8 @@ void CreateNewNode(Node* currentNode, size_t currentDepth)
 	BVHxSort(currentNode->gameObjects);
 	// Find the  midpoint
 	size_t midPoint = currentNode->gameObjects.size() / 2;
-	if (currentNode->gameObjects[midPoint - 1]->boundingBox.left == currentNode->gameObjects[midPoint + 1]->boundingBox.left)
+	
+	if (std::abs(currentNode->gameObjects[midPoint - 1]->boundingBox.left - currentNode->gameObjects[midPoint + 1]->boundingBox.left) <= 1)
 	{
 		// Organise the objects from smallest y to largest y
 		BVHySort(currentNode->gameObjects);
@@ -322,11 +321,11 @@ void CreateNewNode(Node* currentNode, size_t currentDepth)
 void CalculateNodeBounds(Node* currentNode)
 {
 	// Fill in the values of the back object in the current node
-	float smallestX = currentNode->gameObjects.back()->boundingBox.left;
-	float largestX = currentNode->gameObjects.back()->boundingBox.left + currentNode->gameObjects.back()->boundingBox.width;
+	int smallestX = currentNode->gameObjects.back()->boundingBox.left;
+	int largestX = currentNode->gameObjects.back()->boundingBox.left + currentNode->gameObjects.back()->boundingBox.width;
 
-	float smallestY = currentNode->gameObjects.back()->boundingBox.top;
-	float largestY = currentNode->gameObjects.back()->boundingBox.top + currentNode->gameObjects.back()->boundingBox.height;
+	int smallestY = currentNode->gameObjects.back()->boundingBox.top;
+	int largestY = currentNode->gameObjects.back()->boundingBox.top + currentNode->gameObjects.back()->boundingBox.height;
 
 	// Find smallest and largest X and Y values
 	for (GameObject* object : currentNode->gameObjects)
@@ -389,6 +388,9 @@ void CreateBVH()
 	 */
 	auto t1 = std::chrono::high_resolution_clock::now();
 	InitObjectSort();
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float, std::milli> time = t2 - t1;
+	LOG("Time to complete init sort: " + std::to_string(time.count()) + "ms")
 
 	// Create master node
 	Node* masterNode = new Node();
@@ -396,15 +398,24 @@ void CreateBVH()
 	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
 
 	// Start creating bvh
+	t1 = std::chrono::high_resolution_clock::now();
+
 	CreateNewNode(masterNode, 1);
 
+	t2 = std::chrono::high_resolution_clock::now();
+	time = t2 - t1;
+	LOG("Time to complete bvh creation: " + std::to_string(time.count()) + "ms")
+
 	// Calculate the bounds of all the nodes
+	t1 = std::chrono::high_resolution_clock::now();
+
 	CalculateNodeBounds(masterNode);
 
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	LOG("Time to create BVH: " + std::to_string(time.count()) + "ms")
+	t2 = std::chrono::high_resolution_clock::now();
+	time = t2 - t1;
+	LOG("Time to complete bvh bounds: " + std::to_string(time.count()) + "ms")
 
+	LOG("Size of bhv: " + std::to_string(bvh.size()))
 }
 
 /* Set this to node as of now due to BVH creation not adding gameobjects correctly */
@@ -428,23 +439,15 @@ void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode)
 		return;
 	}
 	// If this is not a nullptr, the searchRect is within this node, and there are two or fewer objects with this node, then write it down
-	collidedNodes.emplace_back(currentNode);
-	
-}
-
-void CheckCollisionsWithinNodes(FloatRect boundingBox)
-{
-	for (Node* node : collidedNodes)
+	// Check collisions with object inside of node
+	for (GameObject* object : currentNode->gameObjects)
 	{
-		// Check collisions with object inside of node
-		for (GameObject* object : node->gameObjects)
+		if (BoxBoxCollision(searchRect, object->boundingBox))
 		{
-			if (BoxBoxCollision(boundingBox, object->boundingBox))
-			{
-				collidedObjects.emplace_back(object);
-			}
+			collidedObjects.emplace_back(object);
 		}
 	}
+	
 }
 
 
@@ -464,7 +467,6 @@ int main()
 	auto t1 = std::chrono::high_resolution_clock::now();
 	// Traverse through the bvh, then check objects within that node
 	RecursiveSearchBVH(birdObject, bvh[0]);
-	CheckCollisionsWithinNodes(birdObject);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
@@ -473,7 +475,8 @@ int main()
 	// DEBUG ONLY - manually check all collisions to compare with bvh
 	for (GameObject* object : tempCollisions)
 	{
-		LOG("DEBUG, object collided with: " + object->name)
+		LOG("DEBUG, object collided with: ")
+		LOG(object->name)
 	}
 	LOG("")
 	// Print out objects hit by traversing bvh
@@ -485,7 +488,6 @@ int main()
 
 	std::cout << "Size of Full Search collisionQueue: " << tempCollisions.size() << std::endl;
 	std::cout << "Full Search time to complete : " << fullSearch_timeInMs << "ms" << std::endl;
-	std::cout << "Size of BVH Traverse collisionQueue: " << collidedNodes.size() << std::endl;
 	std::cout << "BVH Traverse time to complete : " << bvhRecursive_timeInMs << "ms" << std::endl;
 
 	sf::RenderWindow window(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
