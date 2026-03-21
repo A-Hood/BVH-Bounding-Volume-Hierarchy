@@ -13,6 +13,8 @@
 
 #define LOG(x) std::cout << x << std::endl;
 
+struct Node;
+
 struct APPLICATION_SETTINGS {
 	const uint16_t SCREEN_WIDTH = 1920;
 	const uint16_t SCREEN_HEIGHT = 1080;
@@ -70,8 +72,14 @@ struct GameObject {
 		bbVisual.setPosition(boundingBox.left, boundingBox.top);
 	}
 
+	void DefineLeafNode(Node* _leafNode)
+	{
+		leafNode = _leafNode;
+	}
+
 	std::string name;
 	FloatRect boundingBox;
+	Node* leafNode = nullptr;
 	sf::RectangleShape bbVisual;
 };
 
@@ -119,7 +127,7 @@ struct Node {
 
 	void ChangeVisibility(size_t currentDepth)
 	{
-		if (currentDepth == depth)
+		if (currentDepth == depth || currentDepth == 0)
 		{
 			bbVisual.setOutlineColor(sf::Color::Red);
 		}
@@ -331,6 +339,11 @@ void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth)
 	// Return if the number of game objects is 3 or less and it has reached the maximum depth
 	if (currentNode->gameObjects.size() <= 3 || currentDepth >= maximumDepth)
 	{
+		// Before return, set each gameobject in this current node to be this current node
+		for (GameObject* object : currentNode->gameObjects)
+		{
+			object->DefineLeafNode(currentNode);
+		}
 		return;
 	}
 
@@ -403,7 +416,18 @@ void CreateBVH()
 	LOG("Time to create BVH: " + std::to_string(time.count()) + "ms")
 }
 
-/* Set this to node as of now due to BVH creation not adding gameobjects correctly */
+void RecalculateBVHBounds(Node* currentNode)
+{
+	FloatRect boundingBox = CalculateBoundingBox(currentNode->gameObjects);
+	currentNode->DefineBounds(boundingBox);
+
+	if (currentNode->previousNode != nullptr)
+	{
+		RecalculateBVHBounds(currentNode->previousNode);
+	}
+}
+
+
 void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode) 
 {
 	// If the searchRect is not within this current node, do not proceed
@@ -431,10 +455,6 @@ void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode)
 	}
 	
 }
-
-
-
-
 
 enum E_DigitalButton
 {
@@ -492,6 +512,20 @@ const char* ConvertButtonStateToName(E_DigitalButton state)
 DigitalButton leftMouse;
 sf::Vector2i previousMousePos;
 
+void MouseClickAction(const sf::Window& window)
+{
+	sf::Vector2i currentMousePos = sf::Mouse::getPosition(window);
+	sf::Vector2i deltaMousePos = currentMousePos - previousMousePos;
+
+	if (collidedObjects.empty())
+	{
+		return;
+	}
+	collidedObjects[0]->IncrementPosition(deltaMousePos);
+	// Recalculate the bvh bounds
+	RecalculateBVHBounds(collidedObjects[0]->leafNode);
+}
+
 
 size_t currentDepth = 0;
 int main()
@@ -538,11 +572,7 @@ int main()
 
 	sf::RenderWindow window(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
 	window.setKeyRepeatEnabled(false);
-	window.setFramerateLimit(20);
-
-	for (auto node : bvh) {
-		node->ChangeVisibility(currentDepth);
-	}
+	window.setFramerateLimit(60);
 
 	while (window.isOpen())
 	{
@@ -558,17 +588,11 @@ int main()
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
 				{
 					currentDepth++;
-					for (auto node : bvh) {
-						node->ChangeVisibility(currentDepth);
-					}
 					LOG(currentDepth)
 				}
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
 				{
 					currentDepth--;
-					for (auto node : bvh) {
-						node->ChangeVisibility(currentDepth);
-					}
 					LOG(currentDepth)
 				}
 			}
@@ -583,6 +607,7 @@ int main()
 		/* BVH Visualisation */
 		for (auto node : bvh) {
 			window.draw(node->bbVisual);
+			node->ChangeVisibility(currentDepth);
 		}
 
 		// Mouse
@@ -610,14 +635,7 @@ int main()
 
 		if (leftMouse.GetButtonState() == E_DigitalButton::ACTIVE)
 		{
-			sf::Vector2i currentMousePos = sf::Mouse::getPosition(window);
-			sf::Vector2i deltaMousePos = currentMousePos - previousMousePos;
-			
-			for (GameObject* object : collidedObjects)
-			{
-				//object->SetPosition(previousMousePos);
-				object->IncrementPosition(deltaMousePos);
-			}
+			MouseClickAction(window);
 		}
 		previousMousePos = sf::Mouse::getPosition(window);
 
