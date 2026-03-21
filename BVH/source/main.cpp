@@ -54,6 +54,22 @@ struct GameObject {
 		bbVisual.setFillColor(sf::Color(rR, rG, rB));
 	}
 
+	void SetPosition(sf::Vector2i position)
+	{
+		boundingBox.left = position.x;
+		boundingBox.top = position.y;
+
+		bbVisual.setPosition(boundingBox.left, boundingBox.top);
+	}
+
+	void IncrementPosition(sf::Vector2i position)
+	{
+		boundingBox.left += position.x;
+		boundingBox.top += position.y;
+
+		bbVisual.setPosition(boundingBox.left, boundingBox.top);
+	}
+
 	std::string name;
 	FloatRect boundingBox;
 	sf::RectangleShape bbVisual;
@@ -151,7 +167,7 @@ int RandomGen(size_t minValue, size_t maxValue)
 void CreateGameObjects()
 {
 	// Creation of example objects
-	/*
+
 	gameObjects.emplace_back("circle", FloatRect(0, 0, 64, 64));
 	gameObjects.emplace_back("chair", FloatRect(119, 0, 64, 64));
 	gameObjects.emplace_back("dino", FloatRect(280 * 2.2f, 0, 64, 64));
@@ -160,7 +176,7 @@ void CreateGameObjects()
 	gameObjects.emplace_back("jockey", FloatRect(107, 128, 64, 64));
 	gameObjects.emplace_back("frog", FloatRect(230, 128 * 3.17f, 64, 64));
 	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
-	*/
+
 	/*
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 1), 64, 64));
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 2), 64, 64));
@@ -168,14 +184,15 @@ void CreateGameObjects()
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 4), 64, 64));
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 5), 64, 64));
 	*/
-
-	for (int x = 0; x < 5000; x++)
+	/*
+	for (int x = 0; x < 100000; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
 		gameObjects.emplace_back("obj_" + std::to_string(x), FloatRect(randomX, randomY, 64, 64));
 	}
+	*/
 
 
 	/*
@@ -206,10 +223,9 @@ bool BoxBoxCollision(FloatRect boxA, FloatRect boxB)
 // DEBUG STUFF  ---------------------------------------------------------------------------------------------------------------------
 
 
-// Will change, the function will pass in the vector of what's inside that bounding box of the bvh rather than all objects
+// Checks all the collisions in the scene to compare the results with the bvh
 void CheckCollison(FloatRect collisionBox)
 {
-	auto t1 = std::chrono::high_resolution_clock::now();
 	for (GameObject& object : gameObjects)
 	{
 		if (BoxBoxCollision(collisionBox, object.boundingBox))
@@ -217,23 +233,7 @@ void CheckCollison(FloatRect collisionBox)
 			tempCollisions.push_back(&object);
 		}
 	}
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	fullSearch_timeInMs += time.count();
 }
-
-size_t printCounter = 0;
-void PrintGameObjectNames(const std::vector<GameObject*>& myVec)
-{
-	LOG("-------------- Printing objects, counter: " + std::to_string(printCounter) + " --------------")
-	for (GameObject* object : myVec)
-	{
-		LOG(object->name)
-	}
-	LOG("-------------- Printing objects end --------------")
-	printCounter++;
-}
-
 
 // BVH Stuff ------------------------------------------------------------------------------------------------------------------------
 
@@ -320,7 +320,7 @@ void AssignObjectSide(std::vector<GameObject*>& leftSide, std::vector<GameObject
 }
 
 
-void CreateNewNode(Node* currentNode, size_t currentDepth)
+void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth)
 {
 	// DEBUG
 	currentNode->DefineDepth(currentDepth);
@@ -328,8 +328,8 @@ void CreateNewNode(Node* currentNode, size_t currentDepth)
 	FloatRect boundingBox = CalculateBoundingBox(currentNode->gameObjects);
 	currentNode->DefineBounds(boundingBox);
 
-	// Return if the number of game objects is 3 or less
-	if (currentNode->gameObjects.size() <= 3 || currentDepth >= 8)
+	// Return if the number of game objects is 3 or less and it has reached the maximum depth
+	if (currentNode->gameObjects.size() <= 3 || currentDepth >= maximumDepth)
 	{
 		return;
 	}
@@ -367,8 +367,8 @@ void CreateNewNode(Node* currentNode, size_t currentDepth)
 	currentNode->childA->DefineGameObjects(leftSide);
 	currentNode->childB->DefineGameObjects(rightSide);
 
-	CreateNewNode(currentNode->childA, currentDepth + 1);
-	CreateNewNode(currentNode->childB, currentDepth + 1);
+	CreateNewNode(currentNode->childA, currentDepth + 1, maximumDepth);
+	CreateNewNode(currentNode->childB, currentDepth + 1, maximumDepth);
 
 }
 
@@ -396,7 +396,7 @@ void CreateBVH()
 	Node* masterNode = new Node();
 	bvh.emplace_back(masterNode);
 	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
-	CreateNewNode(masterNode, 1);
+	CreateNewNode(masterNode, 1, 18);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
@@ -433,6 +433,66 @@ void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode)
 }
 
 
+
+
+
+enum E_DigitalButton
+{
+	NONE = 0,
+	PRESSED,
+	ACTIVE,
+	RELEASED
+};
+
+
+struct DigitalButton
+{
+	void SetButtonState(bool buttonHeld)
+	{
+		if (!buttonHeld)
+		{
+			m_buttonState = RELEASED;
+			return;
+		}
+		if (m_buttonState == RELEASED)
+		{
+			m_buttonState = PRESSED;
+			return;
+		}
+		if (m_buttonState == PRESSED)
+		{
+			m_buttonState = ACTIVE;
+		}
+	}
+
+	E_DigitalButton GetButtonState()
+	{
+		return m_buttonState;
+	}
+	E_DigitalButton	m_buttonState = RELEASED;
+};
+
+
+const char* ConvertButtonStateToName(E_DigitalButton state)
+{
+	switch (state)
+	{
+		case PRESSED:
+			return "PRESSED";
+		case ACTIVE:
+			return "ACTIVE";
+		case RELEASED:
+			return "RELEASED";
+		case NONE:
+		default:
+			return "";
+	}
+}
+
+DigitalButton leftMouse;
+sf::Vector2i previousMousePos;
+
+
 size_t currentDepth = 0;
 int main()
 {
@@ -443,16 +503,20 @@ int main()
 	CreateGameObjects();
 	CreateBVH();
 
-	// Check all of the collisions
-	CheckCollison(birdObject);
-
+	// Check all of the collisions to compare against bvh search
 	auto t1 = std::chrono::high_resolution_clock::now();
-	// Traverse through the bvh, then check objects within that node
-	RecursiveSearchBVH(birdObject, bvh[0]);
-
+	CheckCollison(birdObject);
 	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	bvhRecursive_timeInMs = time.count();
+	std::chrono::duration<float, std::milli> fullSearch = t2 - t1;
+	fullSearch_timeInMs = fullSearch.count();
+
+
+	// Traverse through the bvh, then check objects within that node
+	t1 = std::chrono::high_resolution_clock::now();
+	RecursiveSearchBVH(birdObject, bvh[0]);
+	t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float, std::milli> bvhSearch = t2 - t1;
+	bvhRecursive_timeInMs = bvhSearch.count();
 
 	// DEBUG ONLY - manually check all collisions to compare with bvh
 	for (GameObject* object : tempCollisions)
@@ -466,14 +530,15 @@ int main()
 	{
 		std::cout << "BVH, Object collided with: " << object->name << "\n";
 	}
-	LOG("")
+	collidedObjects.clear();
 
-	std::cout << "Size of Full Search collisionQueue: " << tempCollisions.size() << std::endl;
+	LOG("")
 	std::cout << "Full Search time to complete : " << fullSearch_timeInMs << "ms" << std::endl;
 	std::cout << "BVH Traverse time to complete : " << bvhRecursive_timeInMs << "ms" << std::endl;
 
 	sf::RenderWindow window(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
 	window.setKeyRepeatEnabled(false);
+	window.setFramerateLimit(20);
 
 	for (auto node : bvh) {
 		node->ChangeVisibility(currentDepth);
@@ -518,6 +583,47 @@ int main()
 		/* BVH Visualisation */
 		for (auto node : bvh) {
 			window.draw(node->bbVisual);
+		}
+
+		// Mouse
+		leftMouse.SetButtonState(sf::Mouse::isButtonPressed(sf::Mouse::Left));
+
+		if (leftMouse.GetButtonState() == E_DigitalButton::PRESSED)
+		{
+			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
+
+			t1 = std::chrono::high_resolution_clock::now();
+			RecursiveSearchBVH(FloatRect(mousePos.x, mousePos.y, 1, 1), bvh[0]);
+			t2 = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<float, std::milli> bvhSearch = t2 - t1;
+
+
+			t1 = std::chrono::high_resolution_clock::now();
+			CheckCollison(FloatRect(mousePos.x, mousePos.y, 1, 1));
+			t2 = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<float, std::milli> fullSearch = t2 - t1;
+
+			LOG("")
+			LOG("Time for full search: " + std::to_string(fullSearch.count()) + "ms")
+			LOG("Time for bvh search: " + std::to_string(bvhSearch.count()) + "ms")
+		}
+
+		if (leftMouse.GetButtonState() == E_DigitalButton::ACTIVE)
+		{
+			sf::Vector2i currentMousePos = sf::Mouse::getPosition(window);
+			sf::Vector2i deltaMousePos = currentMousePos - previousMousePos;
+			
+			for (GameObject* object : collidedObjects)
+			{
+				//object->SetPosition(previousMousePos);
+				object->IncrementPosition(deltaMousePos);
+			}
+		}
+		previousMousePos = sf::Mouse::getPosition(window);
+
+		if (leftMouse.GetButtonState() == E_DigitalButton::RELEASED)
+		{
+			collidedObjects.clear();
 		}
 
 		window.display();
