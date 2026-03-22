@@ -45,6 +45,7 @@ struct Collider {
 	uint16_t id;
 	FloatRect boundingBox;
 	bool isStatic = true;
+	float rotation = 0.0f;
 
 #if _BVHDEBUG
 	// DEBUG ---------------------------------------------------------------------

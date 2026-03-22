@@ -40,12 +40,14 @@ SearchResult BVH::Search(FloatRect _rect) {
 	return result;
 }
 
+// AABB (non-rotated)
 bool BVH::AABBCollision(FloatRect _boxA, FloatRect _boxB) {
 	return _boxA.left < _boxB.left   + _boxB.width &&
 		   _boxA.left + _boxA.width  > _boxB.left &&
 		   _boxA.top  + _boxA.height > _boxB.top &&
 		   _boxA.top  < _boxB.top    + _boxB.height;
 }
+// Seperating-Axis Theorem (for polygons)
 
 FloatRect BVH::CalculateBoundingBox(const std::vector<Collider*>& nodeVector) {
 	// Fill in the values of the back object in the current node
