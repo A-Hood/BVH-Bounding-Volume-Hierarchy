@@ -175,7 +175,7 @@ int RandomGen(size_t minValue, size_t maxValue)
 void CreateGameObjects()
 {
 	// Creation of example objects
-
+	/*
 	gameObjects.emplace_back("circle", FloatRect(0, 0, 64, 64));
 	gameObjects.emplace_back("chair", FloatRect(119, 0, 64, 64));
 	gameObjects.emplace_back("dino", FloatRect(280 * 2.2f, 0, 64, 64));
@@ -184,7 +184,7 @@ void CreateGameObjects()
 	gameObjects.emplace_back("jockey", FloatRect(107, 128, 64, 64));
 	gameObjects.emplace_back("frog", FloatRect(230, 128 * 3.17f, 64, 64));
 	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
-
+	*/
 	/*
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 1), 64, 64));
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 2), 64, 64));
@@ -192,15 +192,15 @@ void CreateGameObjects()
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 4), 64, 64));
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 5), 64, 64));
 	*/
-	/*
-	for (int x = 0; x < 100000; x++)
+
+	for (int x = 0; x < 5000; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
 		gameObjects.emplace_back("obj_" + std::to_string(x), FloatRect(randomX, randomY, 64, 64));
 	}
-	*/
+
 
 
 	/*
@@ -245,6 +245,36 @@ void CheckCollison(FloatRect collisionBox)
 
 // BVH Stuff ------------------------------------------------------------------------------------------------------------------------
 
+// Sorting algorithms
+bool VerticalComparison(const GameObject* objectA, const GameObject* objectB)
+{
+	return objectA->boundingBox.top < objectB->boundingBox.top;
+}
+bool HorizontalComparison(const GameObject* objectA, const GameObject* objectB)
+{
+	return objectA->boundingBox.left < objectB->boundingBox.left;
+}
+
+void BVHySort(std::vector<GameObject*>& unsortedVector)
+{
+	std::sort(unsortedVector.begin(), unsortedVector.end(), VerticalComparison);
+}
+void BVHxSort(std::vector<GameObject*>& unsortedVector)
+{
+	std::sort(unsortedVector.begin(), unsortedVector.end(), HorizontalComparison);
+}
+namespace Sort
+{
+	enum E_SortOperation
+	{
+		NONE = 0,
+		VERTICAL_SORT,
+		HORIZONTAL_SORT
+	};
+}
+
+
+
 std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVector)
 {
 	std::vector<GameObject*> newVector;
@@ -254,7 +284,6 @@ std::vector<GameObject*> ConvertVectorType(std::vector<GameObject>& gameObjectVe
 	}
 	return newVector;
 }
-
 FloatRect CalculateBoundingBox(const std::vector<GameObject*>& nodeVector)
 {
 	// Fill in the values of the back object in the current node
@@ -298,37 +327,8 @@ bool CheckXLongestSide(FloatRect boundingBox)
 	// False: Y is the longest side
 	return boundingBox.width >= boundingBox.height;
 }
-void AssignObjectSide(std::vector<GameObject*>& leftSide, std::vector<GameObject*>& rightSide, const Node* currentNode, float boundaryMidpoint, bool xIsLongestSide)
-{
-	float objectMidpoint;
 
-	for (GameObject* object : currentNode->gameObjects)
-	{
-		// Calculate the midpoint of the object
-		if (xIsLongestSide)
-		{
-			objectMidpoint = object->boundingBox.left + (object->boundingBox.width / 2);
-		}
-		else
-		{
-			objectMidpoint = object->boundingBox.top + (object->boundingBox.height / 2);
-		}
-
-		if (objectMidpoint < boundaryMidpoint)
-		{
-			// Object is moved to the left side
-			leftSide.emplace_back(object);
-		}
-		else
-		{
-			// Object is moved to the right side
-			rightSide.emplace_back(object);
-		}
-	}
-}
-
-
-void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth)
+void CreateNewNode(Node* currentNode, Sort::E_SortOperation sortOperation, size_t currentDepth, size_t maximumDepth)
 {
 	// DEBUG
 	currentNode->DefineDepth(currentDepth);
@@ -347,24 +347,24 @@ void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth)
 		return;
 	}
 
-	// Create empty vectors
-	std::vector<GameObject*> leftSide;
-	std::vector<GameObject*> rightSide;
+	if (CheckXLongestSide(boundingBox) && sortOperation != Sort::E_SortOperation::HORIZONTAL_SORT)
+	{
+		// Sort along the x
+		BVHxSort(currentNode->gameObjects);
+		sortOperation = Sort::E_SortOperation::HORIZONTAL_SORT;
+	}
+	else if (sortOperation != Sort::E_SortOperation::VERTICAL_SORT)
+	{
+		// Sort along the y
+		BVHySort(currentNode->gameObjects);
+		sortOperation = Sort::E_SortOperation::VERTICAL_SORT;
+	}
 
-	float boundaryMidpoint;		// Can represent either on the x or the y
-	if (CheckXLongestSide(boundingBox))
-	{
-		// Width is the longest side
-		boundaryMidpoint = boundingBox.left + (boundingBox.width / 2);
-		AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint, true);
-	}
-	else
-	{
-		// Height is the longest side
-		boundaryMidpoint = boundingBox.top + (boundingBox.height / 2);
-		AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint, false);
-	}
-	
+	size_t midpoint = currentNode->gameObjects.size() / 2;
+
+	std::vector<GameObject*> leftSide = {currentNode->gameObjects.begin(), currentNode->gameObjects.begin() + midpoint};
+	std::vector<GameObject*> rightSide = {currentNode->gameObjects.begin() + midpoint, currentNode->gameObjects.end()};
+
 	Node* childA = new Node();
 	bvh.emplace_back(childA);
 	currentNode->DefineChildA(childA);
@@ -373,35 +373,30 @@ void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth)
 	bvh.emplace_back(childB);
 	currentNode->DefineChildB(childB);
 
-	// Define parents
 	currentNode->childA->DefineParentNode(currentNode);
 	currentNode->childB->DefineParentNode(currentNode);
 
 	currentNode->childA->DefineGameObjects(leftSide);
 	currentNode->childB->DefineGameObjects(rightSide);
 
-	CreateNewNode(currentNode->childA, currentDepth + 1, maximumDepth);
-	CreateNewNode(currentNode->childB, currentDepth + 1, maximumDepth);
-
+	CreateNewNode(currentNode->childA, sortOperation, currentDepth + 1, maximumDepth);
+	CreateNewNode(currentNode->childB, sortOperation, currentDepth + 1, maximumDepth);
 }
 
 
 void CreateBVH()
 {
-	/* 1. Create master node
-	 * 2. All the objects in the list belong to the master node
-	 * 3. Start the recursion
-	 * 4. Go through the list to find the smallest x and y, largest x and y. Calculate the bounds 
-	 * 5. Create two vectors called left and right. They are empty
-	 * 6. Find the longest side, x or y
-	 * 7. Start a foreach loop of the game objects
-	 * 8. Calculate the midpoint of the object
-	 * 9. If the x is the longest side: check if the x of the midpoint is less than the midpoint of the current box, therefore it will be on the left side. Else the object is on the right side. 
-	 * 10. If on the left, move object to the left vector. Else move the object to the right vector
-	 * 11. If the y is the longest side: check if the y of the midpoint is less than the midpoint of the current box, therefore it will be on the left side. Else the object is on the right side.
-	 * 12. If on the left, move object to the left vector. Else move the object to the right vector
-	 * 13. Create child node A and B
-	 * 14. Left vec goes to childA, right vec goes to childB
+	/* Steps to create the bvh:
+	 * 1. Organise the objects in the vector from smallest x to largest x
+	 * 2. Create a master node which contains all the GameObjects
+	 * 3. Start recursion by passing in the master node
+	 * 4. Calculate the bounds of the current node
+	 * 5. Find the longest side: X or Y
+	 * 6. If x is the longest, sort along the x. If y is the longest, sort along the y. ONLY sort if needed.
+	 * 7. Create left and right vector and split the sides with the midpoint.
+	 * 8. Create childA and childB, assign parents, add to bvh.
+	 * 9. Assign left side to childA, right side to childB
+	 * 10. Recurse back through the function unless there is 3 or less objects, or you have reached the maximum depth allowed
 	 */
 
 	auto t1 = std::chrono::high_resolution_clock::now();
@@ -409,7 +404,7 @@ void CreateBVH()
 	Node* masterNode = new Node();
 	bvh.emplace_back(masterNode);
 	masterNode->DefineGameObjects(ConvertVectorType(gameObjects));
-	CreateNewNode(masterNode, 1, 18);
+	CreateNewNode(masterNode, Sort::E_SortOperation::NONE, 1, 18);
 
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
@@ -455,14 +450,17 @@ void RecursiveSearchBVH(FloatRect searchRect, Node* currentNode)
 	}
 	
 }
-
-enum E_DigitalButton
+namespace Button
 {
-	NONE = 0,
-	PRESSED,
-	ACTIVE,
-	RELEASED
-};
+	enum E_DigitalButton
+	{
+		NONE = 0,
+		PRESSED,
+		ACTIVE,
+		RELEASED
+	};
+}
+
 
 
 struct DigitalButton
@@ -471,39 +469,39 @@ struct DigitalButton
 	{
 		if (!buttonHeld)
 		{
-			m_buttonState = RELEASED;
+			m_buttonState = Button::E_DigitalButton::RELEASED;
 			return;
 		}
-		if (m_buttonState == RELEASED)
+		if (m_buttonState == Button::E_DigitalButton::RELEASED)
 		{
-			m_buttonState = PRESSED;
+			m_buttonState = Button::E_DigitalButton::PRESSED;
 			return;
 		}
-		if (m_buttonState == PRESSED)
+		if (m_buttonState == Button::E_DigitalButton::PRESSED)
 		{
-			m_buttonState = ACTIVE;
+			m_buttonState = Button::ACTIVE;
 		}
 	}
 
-	E_DigitalButton GetButtonState()
+	Button::E_DigitalButton GetButtonState()
 	{
 		return m_buttonState;
 	}
-	E_DigitalButton	m_buttonState = RELEASED;
+	Button::E_DigitalButton	m_buttonState = Button::RELEASED;
 };
 
 
-const char* ConvertButtonStateToName(E_DigitalButton state)
+const char* ConvertButtonStateToName(Button::E_DigitalButton state)
 {
 	switch (state)
 	{
-		case PRESSED:
+		case Button::E_DigitalButton::PRESSED:
 			return "PRESSED";
-		case ACTIVE:
+		case Button::E_DigitalButton::ACTIVE:
 			return "ACTIVE";
-		case RELEASED:
+		case Button::E_DigitalButton::RELEASED:
 			return "RELEASED";
-		case NONE:
+		case Button::E_DigitalButton::NONE:
 		default:
 			return "";
 	}
@@ -613,7 +611,7 @@ int main()
 		// Mouse
 		leftMouse.SetButtonState(sf::Mouse::isButtonPressed(sf::Mouse::Left));
 
-		if (leftMouse.GetButtonState() == E_DigitalButton::PRESSED)
+		if (leftMouse.GetButtonState() == Button::E_DigitalButton::PRESSED)
 		{
 			sf::Vector2i mousePos = sf::Mouse::getPosition(window);
 
@@ -633,13 +631,13 @@ int main()
 			LOG("Time for bvh search: " + std::to_string(bvhSearch.count()) + "ms")
 		}
 
-		if (leftMouse.GetButtonState() == E_DigitalButton::ACTIVE)
+		if (leftMouse.GetButtonState() == Button::E_DigitalButton::ACTIVE)
 		{
 			MouseClickAction(window);
 		}
 		previousMousePos = sf::Mouse::getPosition(window);
 
-		if (leftMouse.GetButtonState() == E_DigitalButton::RELEASED)
+		if (leftMouse.GetButtonState() == Button::E_DigitalButton::RELEASED)
 		{
 			collidedObjects.clear();
 		}
