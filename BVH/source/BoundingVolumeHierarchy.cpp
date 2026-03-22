@@ -23,6 +23,7 @@ void BVH::Generate() {
 
 SearchResult BVH::Search(FloatRect _rect) {
 	m_collisionQueue.clear();
+	m_collisionNodesQueue.clear();
 
     // Traverse through the bvh, then check objects within that node
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -30,8 +31,10 @@ SearchResult BVH::Search(FloatRect _rect) {
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float, std::milli> bvhSearch = t2 - t1;
 
+	// Set result of search
 	SearchResult result;
 	result.collisions = m_collisionQueue;
+	result.nodes = m_collisionNodesQueue;
 	result.timeTaken = bvhSearch.count();
 
 	return result;
@@ -118,16 +121,6 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 	// Return if the number of game objects is 3 or less and it has reached the maximum depth
 	if (currentNode->m_colliders.size() <= 3 || currentDepth >= maximumDepth)
 	{
-		/*
-		 * This part needs to be redone, the collider should not hold the leaf node
-		 */
-
-		 // Before return, set each gameobject in this current node to be this current node
-		 //for (Collider* object : currentNode->m_colliders)
-		 //{
-		 //	object->DefineLeafNode(currentNode);
-		 //}
-
 		return;
 	}
 
@@ -185,11 +178,29 @@ void BVH::RecursiveSearch(FloatRect searchRect, Node* currentNode) {
 	}
 	// If this is not a nullptr, the searchRect is within this node, and there are two or fewer objects with this node, then write it down
 	// Check collisions with object inside of node
+	// If node contains a non-static collider, push it to queue to be recalculated
+	bool nodeHasDynamic = false;
 	for (Collider* col : currentNode->m_colliders)
 	{
 		if (AABBCollision(searchRect, col->boundingBox))
 		{
 			m_collisionQueue.emplace_back(col);
+			if (!col->isStatic) {
+				nodeHasDynamic = true;
+			}
 		}
+	}
+	if (nodeHasDynamic) {
+		m_collisionNodesQueue.emplace_back(currentNode);
+	}
+}
+
+void BVH::RecalculateBounds(Node* currentNode) {
+	FloatRect boundingBox = CalculateBoundingBox(currentNode->m_colliders);
+	currentNode->DefineBounds(boundingBox);
+
+	if (currentNode->previousNode != nullptr)
+	{
+		RecalculateBounds(currentNode->previousNode);
 	}
 }

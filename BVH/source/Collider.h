@@ -5,9 +5,10 @@
 
 struct Collider {
 	Collider() = default;
-	Collider(uint16_t _id, FloatRect _boundingBox) {
+	Collider(uint16_t _id, FloatRect _boundingBox, bool _isStatic = true) {
 		id = _id;
 		boundingBox = _boundingBox;
+		isStatic = _isStatic;
 
 #if _BVHDEBUG
 		/* SFML Specifics */
@@ -43,6 +44,7 @@ struct Collider {
 
 	uint16_t id;
 	FloatRect boundingBox;
+	bool isStatic = true;
 
 #if _BVHDEBUG
 	// DEBUG ---------------------------------------------------------------------

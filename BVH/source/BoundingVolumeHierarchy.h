@@ -6,7 +6,14 @@
 #include "Node.h"
 
 struct SearchResult {
+    ~SearchResult() {
+        collisions.clear();
+        nodes.clear();
+    }
     std::vector<Collider*> collisions;
+    // we need to save the nodes that had a collision so that we can recalculate all parent nodes
+    // we only want to do this for leaf nodes containing dynamic objects (to be implemented)
+    std::vector<Node*> nodes;
     float timeTaken;
 };
 
@@ -44,12 +51,16 @@ private:
 
     // SEARCH ----------------------------------------------------------------------------------------------------------------------------------------------------------
     void RecursiveSearch(FloatRect searchRect, Node* currentNode);
+
+
 public:
+    void RecalculateBounds(Node* currentNode);
     std::vector<Node*> m_nodes;
     std::vector<Collider*> m_colliders;
 private:
 
 	std::vector<Collider*> m_collisionQueue;
+	std::vector<Node*> m_collisionNodesQueue;
 
     int m_maximumDepth;
 };

@@ -61,6 +61,17 @@ int main()
 	SearchResult result = bvh->Search(birdObject);
 	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
 	std::cout << "Amount of objects collided: " << result.collisions.size() << std::endl;
+	std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
+
+
+	auto t1 = std::chrono::high_resolution_clock::now();
+	// Recalculate bounds for all collided nodes
+	for (Node* node : result.nodes) {
+		bvh->RecalculateBounds(node);
+	}
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float, std::milli> bvhRecalculate = t2 - t1;
+	std::cout << "Time taken: " << bvhRecalculate.count() << "ms" << std::endl;
 	// End of BVH create and search
 
 	sf::RenderWindow window(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
