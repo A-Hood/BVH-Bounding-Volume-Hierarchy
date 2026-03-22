@@ -175,7 +175,7 @@ int RandomGen(size_t minValue, size_t maxValue)
 void CreateGameObjects()
 {
 	// Creation of example objects
-
+	/*
 	gameObjects.emplace_back("circle", FloatRect(0, 0, 64, 64));
 	gameObjects.emplace_back("chair", FloatRect(119, 0, 64, 64));
 	gameObjects.emplace_back("dino", FloatRect(280 * 2.2f, 0, 64, 64));
@@ -184,7 +184,7 @@ void CreateGameObjects()
 	gameObjects.emplace_back("jockey", FloatRect(107, 128, 64, 64));
 	gameObjects.emplace_back("frog", FloatRect(230, 128 * 3.17f, 64, 64));
 	gameObjects.emplace_back("shark", FloatRect(297 * 3.1f, 128 * 4, 64, 64));
-
+	*/
 	/*
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 1), 64, 64));
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 2), 64, 64));
@@ -192,15 +192,15 @@ void CreateGameObjects()
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 4), 64, 64));
 	gameObjects.emplace_back("thing", FloatRect(20, 20 + (90 * 5), 64, 64));
 	*/
-	/*
-	for (int x = 0; x < 100000; x++)
+
+	for (int x = 0; x < 5000; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
 		gameObjects.emplace_back("obj_" + std::to_string(x), FloatRect(randomX, randomY, 64, 64));
 	}
-	*/
+
 
 
 	/*
