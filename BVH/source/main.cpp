@@ -93,6 +93,7 @@ int main()
 
 		window.clear();
 
+#if _BVHDEBUG
 		/* Objects Visualisation */
 		for (const auto& go : bvh->m_colliders) {
 			window.draw(go->rectVisual);
@@ -108,6 +109,7 @@ int main()
 		birdShape.setSize({ birdObject.width, birdObject.height });
 		birdShape.setFillColor({ 255, 255, 255, 255 });
 		window.draw(birdShape);
+#endif
 
 		window.display();
 	}

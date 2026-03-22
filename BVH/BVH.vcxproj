@@ -78,7 +78,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_BVHDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -136,7 +136,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\BoundingVolumeHierarchy.cpp" />
     <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\Node.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="source\BoundingVolumeHierarchy.h" />
+    <ClInclude Include="source\Collider.h" />
+    <ClInclude Include="source\FloatRect.h" />
+    <ClInclude Include="source\Node.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
