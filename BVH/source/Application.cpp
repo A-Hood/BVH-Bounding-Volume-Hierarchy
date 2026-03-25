@@ -5,6 +5,7 @@
 
 Application::Application() : m_bvh()
 {
+	birdObject.SetVertexCount(4);
 }
 
 void Application::CreateApplication() {
@@ -23,7 +24,7 @@ void Application::CreateApplication() {
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
-		m_gameObjects.emplace_back(sf::Vector2f(randomX, randomY), sf::Vector2f(64, 64));
+		m_gameObjects.emplace_back(sf::Vector2f(randomX, randomY), sf::Vector2f(64, 64), 4);
 	}
 
 	// Setup BVH

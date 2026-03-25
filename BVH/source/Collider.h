@@ -25,6 +25,7 @@ public:
 	sf::Vector2f GetSize();
 
 	// Collider creation
+	void SetVertexCount(size_t vertexCount);
 	void CreateCollider();
 	sf::FloatRect GetBoundingBox() const;
 
@@ -35,7 +36,7 @@ public:
 private:
 	sf::FloatRect m_boundingBox;
 	sf::Vector2f m_origin;
-	sf::Vector2f* m_vertices;
+	sf::Vector2f* m_vertices = nullptr;
 
 	size_t m_vertexCount;
 	// DEBUG ONLY - visual purposes

@@ -43,20 +43,27 @@ sf::Vector2f BoxCollider::GetSize()
     return {m_boundingBox.width, m_boundingBox.height};
 }
 
+void BoxCollider::SetVertexCount(size_t vertexCount)
+{
+    m_vertexCount = vertexCount;
+}
+
 void BoxCollider::CreateCollider()
 {
+    m_vertices = new sf::Vector2f[m_vertexCount];
+
     // DEBUG ONLY
     int rR = rand() % 255;
     int rG = rand() % 255;
     int rB = rand() % 255;
     m_bbVisual.setFillColor(sf::Color(rR, rG, rB));
     m_bbVisual.setSize({ m_boundingBox.width, m_boundingBox.height });
-    /*
+
     m_vertices[0] = sf::Vector2f(0.f, 0.f);
     m_vertices[1] = sf::Vector2f(m_boundingBox.left, 0.0f);
     m_vertices[2] = sf::Vector2f(m_boundingBox.left, m_boundingBox.top);
     m_vertices[3] = sf::Vector2f(0.0f, m_boundingBox.top);
-    */
+
 }
 
 sf::FloatRect BoxCollider::GetBoundingBox() const
