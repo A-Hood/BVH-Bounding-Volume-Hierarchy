@@ -2,29 +2,28 @@
 #define NODE_H
 
 #include "Collider.h"
+#include "GameObject.h"
 
-class Node {
+class Node : public BoxCollider {
 public:
 	Node() = default;
 	~Node() = default;
 
 	// Defines GameObjects within that node
-	void DefineColliders(std::vector<Collider*> _colliders)
+	void DefineObjects(std::vector<GameObject*> _colliders)
 	{
 		m_colliders = _colliders;
 	}
 	// Bounds of the Node
-	void DefineBounds(const FloatRect& _boundingBox)
+	void DefineBounds(const sf::FloatRect& _boundingBox)
 	{
-		boundingBox.left = _boundingBox.left;
-		boundingBox.top = _boundingBox.top;
-		boundingBox.width = _boundingBox.width;
-		boundingBox.height = _boundingBox.height;
+		SetPosition({_boundingBox.left, _boundingBox.top});
+		SetSize({_boundingBox.width, _boundingBox.height});
 
 #if _BVHDEBUG
 		/* SFML Stuff */
-		bbVisual.setPosition(boundingBox.left, boundingBox.top);
-		bbVisual.setSize({ boundingBox.width, boundingBox.height });
+		bbVisual.setPosition(GetPosition());
+		bbVisual.setSize(GetSize());
 		bbVisual.setOutlineColor(sf::Color::Red);
 		bbVisual.setOutlineThickness(3);
 		bbVisual.setFillColor(sf::Color(0, 0, 0, 0));
@@ -71,8 +70,7 @@ public:
 	Node* childA = nullptr;
 	Node* childB = nullptr;
 
-	std::vector<Collider*> m_colliders;
-	FloatRect boundingBox;
+	std::vector<GameObject*> m_colliders;
 
 	size_t depth = 1;
 };

@@ -3,10 +3,19 @@
 #include <chrono>
 #include "Random.h"
 
+Application::Application() : m_bvh()
+{
+}
+
 void Application::CreateApplication() {
 	m_window.create(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
 	m_window.setKeyRepeatEnabled(false);
 	m_window.setFramerateLimit(60);
+
+	// Bird object
+	birdObject.SetPosition({1000, 1000});
+	birdObject.SetSize({64, 64});
+	birdObject.CreateCollider();
 
 	// Generate random colliders (DEBUG)
 	for (int x = 0; x < 5; x++)
@@ -14,21 +23,21 @@ void Application::CreateApplication() {
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
-		colliders.emplace_back(x, FloatRect(randomX, randomY, 64, 64), false);
+		m_gameObjects.emplace_back(sf::Vector2f(randomX, randomY), sf::Vector2f(64, 64));
 	}
 
-	// Set-up BVH
-	for (Collider& col : colliders) {
-		m_bvh.AddCollider(&col);
+	// Setup BVH
+	for (GameObject& col : m_gameObjects) {
+		m_bvh.AddGameObject(&col);
 	}
+	// Creates the bhv from the given objects
 	m_bvh.Generate();
 
 	SearchResult result = m_bvh.Search(birdObject);
 	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
 	std::cout << "Amount of objects collided: " << result.collisions.size() << std::endl;
-	std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
 
-
+	/*
 	auto t1 = std::chrono::high_resolution_clock::now();
 	// Recalculate bounds for all collided nodes
 	for (Node* node : result.nodes) {
@@ -37,6 +46,7 @@ void Application::CreateApplication() {
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> bvhRecalculate = t2 - t1;
 	std::cout << "Time taken: " << bvhRecalculate.count() << "ms" << std::endl;
+	*/
 }
 
 void Application::Run() {
@@ -72,28 +82,25 @@ void Application::Update() {
 	SearchResult result;
 	// Movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-		birdObject.top -= moveSpeed;
+		birdObject.IncrementPosition({0, -moveSpeed});
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-		birdObject.top += moveSpeed;
+		birdObject.IncrementPosition({0, moveSpeed});
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-		birdObject.left -= moveSpeed;
+		birdObject.IncrementPosition({-moveSpeed, 0});
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-		birdObject.left += moveSpeed;
-	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-		birdObject.left -= moveSpeed;
+		birdObject.IncrementPosition({moveSpeed, 0});
 	}
 
 #if _BVHDEBUG
 	/* Objects Visualisation */
-	for (const auto& go : m_bvh.m_colliders) {
-		m_window.draw(go->rectVisual);
+	for (const auto& gameObject : m_gameObjects) {
+		m_window.draw(gameObject);
 	}
 	/* BVH Visualisation */
-	for (auto node : m_bvh.m_nodes) {
+	for (auto node : m_bvh.GetNodes()) {
 		m_window.draw(node->bbVisual);
 		node->ChangeVisibility(currentDepth);
 	}
@@ -102,9 +109,10 @@ void Application::Update() {
 	result = m_bvh.Search(birdObject);
 	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
 	std::cout << "Amount of objects collided: " << result.collisions.size() << std::endl;
-	std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
+	//std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
 
 	// Set object red if collision occurs
+	/*
 	if (!result.collisions.empty()) {
 		birdShape.setFillColor({ 255, 0, 0, 255 });
 	}
@@ -113,8 +121,8 @@ void Application::Update() {
 	}
 	birdShape.setPosition(birdObject.left, birdObject.top);
 	birdShape.setSize({ birdObject.width, birdObject.height });
-
-	m_window.draw(birdShape);
+	*/
+	m_window.draw(birdObject);
 #endif
 }
 

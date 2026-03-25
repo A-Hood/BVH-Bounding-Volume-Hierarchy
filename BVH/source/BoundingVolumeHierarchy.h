@@ -3,17 +3,16 @@
 
 #include <vector>
 
+#include "GameObject.h"
 #include "Node.h"
 
 struct SearchResult {
     ~SearchResult() {
         collisions.clear();
-        nodes.clear();
     }
-    std::vector<Collider*> collisions;
+    std::vector<GameObject*> collisions;
     // we need to save the nodes that had a collision so that we can recalculate all parent nodes
     // we only want to do this for leaf nodes containing dynamic objects (to be implemented)
-    std::vector<Node*> nodes;
     float timeTaken;
 };
 
@@ -23,45 +22,42 @@ public:
     BVH(const int _maxDepth) {
         m_maximumDepth = _maxDepth;
     }
-
     ~BVH() = default;
 
+public:
+    // Update (if dynamic)
+    void AddGameObject(GameObject* collider);
+	//std::vector<GameObject*>& GetCollisionQueue();
     // Create
     void Generate();
+    // Nodes
+    std::vector<Node*>& GetNodes();
 
-    // Update (if dynamic)
+    // Search functions
+    SearchResult Search(const GameObject& targetObject);
 
-    void AddCollider(Collider* _collider) {
-        m_colliders.push_back(_collider);
-    }
-	std::vector<Collider*>& GetCollisionQueue() {
-		return m_collisionQueue;
-    }
+    void RecalculateBounds(Node* currentNode);
 
-    SearchResult Search(FloatRect _rect);
 private:
-	bool AABBCollision(FloatRect _boxA, FloatRect _boxB);
+    // NOTE: This function should not be inside bvh, instead inside its own collision class
+	bool AABBCollision(const BoxCollider& gameObjectA, const BoxCollider& gameObjectB);
 
-    FloatRect CalculateBoundingBox(const std::vector<Collider*>& nodeVector);
+    sf::FloatRect CalculateBoundingBox(const std::vector<GameObject*>& nodeVector);
 
-    bool CheckXLongestSide(FloatRect boundingBox);
-	void AssignObjectSide(std::vector<Collider*>& leftSide, std::vector<Collider*>& rightSide, const Node* currentNode, float boundaryMidpoint, bool xIsLongestSide);
+    bool CheckXLongestSide(const sf::FloatRect& boundingBox);
+	void AssignObjectSide(std::vector<GameObject*>& leftSide, std::vector<GameObject*>& rightSide, const Node* currentNode, float boundaryMidpoint, bool xIsLongestSide);
 
     void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth);
 
     // SEARCH ----------------------------------------------------------------------------------------------------------------------------------------------------------
-    void RecursiveSearch(FloatRect searchRect, Node* currentNode);
+    void RecursiveSearch(const GameObject& targetObject, Node* currentNode);
 
-
-public:
-    void RecalculateBounds(Node* currentNode);
-    std::vector<Node*> m_nodes;
-    std::vector<Collider*> m_colliders;
 private:
+    // Collisions happening inside the bvh
+	std::vector<GameObject*> m_collisionQueue;
 
-	std::vector<Collider*> m_collisionQueue;
-	std::vector<Node*> m_collisionNodesQueue;
-
+    std::vector<GameObject*> m_ptrGameObjects;
+    std::vector<Node*> m_nodes;
     int m_maximumDepth;
 };
 
