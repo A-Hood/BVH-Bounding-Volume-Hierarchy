@@ -36,7 +36,7 @@ void Application::CreateApplication() {
 
 	SearchResult result = m_bvh.Search(birdObject);
 	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
-	std::cout << "Amount of objects collided: " << result.collisions.size() << std::endl;
+	std::cout << "Amount of nodes: " << result.nodes.size() << std::endl;
 
 	/*
 	auto t1 = std::chrono::high_resolution_clock::now();
@@ -109,7 +109,7 @@ void Application::Update() {
 	// Perform search
 	result = m_bvh.Search(birdObject);
 	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
-	std::cout << "Amount of objects collided: " << result.collisions.size() << std::endl;
+	std::cout << "Amount of nodes: " << result.nodes.size() << std::endl;
 	//std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
 
 	// Set object red if collision occurs

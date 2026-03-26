@@ -18,12 +18,12 @@ public:
 	virtual bool CollideWith(CircleCollider* otherCollider) const = 0;
 
 	// Positions
-	virtual void SetPosition(sf::Vector2f position);
-	virtual void IncrementPosition(sf::Vector2f position);
+    void SetPosition(sf::Vector2f position);
+    void IncrementPosition(sf::Vector2f position);
 	sf::Vector2f GetPosition() const;
 
 	// Origin
-	virtual void SetOrigin(sf::Vector2f origin);
+    void SetOrigin(sf::Vector2f origin);
 	sf::Vector2f GetOrigin();
 
 	// Collider creation
@@ -57,13 +57,14 @@ public:
 public:
 	// Create collider
 	void CreateCollider() override;
+	void UpdateCollider() override {
+		return;
+	}
 
 	// Collisions
 	bool CollideWith(Collider* otherCollider) const override;
 	bool CollideWith(BoxCollider* otherCollider) const override;
 	bool CollideWith(CircleCollider* otherCollider) const override;
-
-
 };
 
 class BoxCollider : public Collider, public sf::Drawable
@@ -72,8 +73,11 @@ public:
 	BoxCollider() = default;
 	~BoxCollider() override = default;
 public:
-	// Collider
+	// Create collider
 	void CreateCollider() override;
+	void UpdateCollider() override {
+		return;
+	}
 
 	// Collisions
 	bool CollideWith(Collider* otherCollider) const override;
@@ -83,7 +87,6 @@ public:
 	// Size
 	void SetSize(sf::Vector2f size);
 	sf::Vector2f GetSize();
-
 
 	// DEBUG
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const override;

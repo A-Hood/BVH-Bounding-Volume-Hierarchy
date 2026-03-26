@@ -8,11 +8,10 @@
 
 struct SearchResult {
     ~SearchResult() {
-        collisions.clear();
+        nodes.clear();
     }
-    std::vector<GameObject*> collisions;
-    // we need to save the nodes that had a collision so that we can recalculate all parent nodes
-    // we only want to do this for leaf nodes containing dynamic objects (to be implemented)
+
+    std::vector<Node*> nodes;
     float timeTaken;
 };
 
@@ -50,8 +49,8 @@ private:
     void RecursiveSearch(const GameObject& targetObject, Node* currentNode);
 
 private:
-    // Collisions happening inside the bvh
-	std::vector<GameObject*> m_collisionQueue;
+    // Nodes containing searched object
+	std::vector<Node*> m_nodesQueue;
 
     std::vector<GameObject*> m_ptrGameObjects;
     std::vector<Node*> m_nodes;

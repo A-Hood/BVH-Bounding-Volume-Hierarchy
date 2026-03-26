@@ -34,7 +34,7 @@ void BVH::AddGameObject(GameObject* collider)
 
 
 SearchResult BVH::Search(const GameObject& targetObject) {
-	m_collisionQueue.clear();
+	m_nodesQueue.clear();
 
     // Traverse through the bvh, then check objects within that node
     auto t1 = std::chrono::high_resolution_clock::now();
@@ -44,7 +44,7 @@ SearchResult BVH::Search(const GameObject& targetObject) {
 
 	// Set result of search
 	SearchResult result;
-	result.collisions = m_collisionQueue;
+	result.nodes = m_nodesQueue;
 	result.timeTaken = bvhSearch.count();
 
 	return result;
@@ -181,17 +181,21 @@ void BVH::RecursiveSearch(const GameObject& targetObject, Node* currentNode) {
 		RecursiveSearch(targetObject, currentNode->childB);
 		return;
 	}
+
+	/// We no longer want to perform collision checks within the BVH beyond the initial AABB check, so we add the node to queue
 	// If this is not a nullptr, the searchRect is within this node, and there are 3 or fewer objects with this node, then write it down
 	// Check collisions with object inside of node
+	/*
 	for (GameObject* gameObject : currentNode->m_colliders)
 	{
 		if (targetObject.CollideWith(gameObject))
 		{
-			m_collisionQueue.emplace_back(gameObject);
+			m_nodesQueue.emplace_back(gameObject);
 		}
 
 	}
-
+	*/
+	m_nodesQueue.emplace_back(currentNode);
 }
 
 void BVH::RecalculateBounds(Node* currentNode) {
