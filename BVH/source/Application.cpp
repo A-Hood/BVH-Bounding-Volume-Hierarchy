@@ -32,7 +32,7 @@ void Application::CreateApplication() {
 		m_bvh.AddGameObject(&col);
 	}
 	// Creates the bhv from the given objects
-	m_bvh.Generate();
+	//m_bvh.Generate();
 
 	SearchResult result = m_bvh.Search(birdObject);
 	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;

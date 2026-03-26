@@ -30,6 +30,9 @@ public:
 	void SetVertexCount(size_t vertexCount);
 	virtual void CreateCollider() = 0;
 
+	// Update collider
+	virtual void UpdateCollider() = 0;
+
 protected:
 	static bool CircleCircleCollision(const Collider* colliderA, const Collider* colliderB);
 	static bool BoxCircleCollision(const BoxCollider* colliderA, const CircleCollider* colliderB);
@@ -59,6 +62,8 @@ public:
 	bool CollideWith(Collider* otherCollider) const override;
 	bool CollideWith(BoxCollider* otherCollider) const override;
 	bool CollideWith(CircleCollider* otherCollider) const override;
+
+
 };
 
 class BoxCollider : public Collider, public sf::Drawable

@@ -9,6 +9,8 @@ public:
     ~GameObject() override = default;
 
 public:
+    void Update();
+
     void SetObjectStatic();
     bool IsObjectStatic();
 

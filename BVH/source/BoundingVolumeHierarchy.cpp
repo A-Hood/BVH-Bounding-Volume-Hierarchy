@@ -38,7 +38,7 @@ SearchResult BVH::Search(const GameObject& targetObject) {
 
     // Traverse through the bvh, then check objects within that node
     auto t1 = std::chrono::high_resolution_clock::now();
-    RecursiveSearch(targetObject, m_nodes[0]); // start search at master node
+    //RecursiveSearch(targetObject, m_nodes[0]); // start search at master node
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float, std::milli> bvhSearch = t2 - t1;
 

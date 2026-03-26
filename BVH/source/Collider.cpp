@@ -31,7 +31,6 @@ void Collider::SetVertexCount(size_t vertexCount)
     m_vertexCount = vertexCount;
 }
 
-
 bool Collider::CircleCircleCollision(const Collider* colliderA, const Collider* colliderB)
 {
     return false;
@@ -73,18 +72,16 @@ bool CircleCollider::CollideWith(CircleCollider* otherCollider) const
 void BoxCollider::CreateCollider()
 {
     m_vertices = new sf::Vertex[m_vertexCount];
-
     // DEBUG ONLY
     int rR = rand() % 255;
     int rG = rand() % 255;
     int rB = rand() % 255;
-    //m_bbVisual.setFillColor(sf::Color(rR, rG, rB));
-    //m_bbVisual.setSize({ m_size.x, m_size.y });
 
-    m_vertices[0] = m_position + sf::Vector2f(0.f, 0.f);
-    m_vertices[1] = m_position + sf::Vector2f(m_size.x, 0.0f);
-    m_vertices[2] = m_position + sf::Vector2f(m_size.x, m_size.y);
-    m_vertices[3] = m_position + sf::Vector2f(0.0f, m_size.y);
+    sf::Vector2f pos = m_position - m_origin;
+    m_vertices[0] = pos + sf::Vector2f(0.f, 0.f);
+    m_vertices[1] = pos + sf::Vector2f(m_size.x, 0.0f);
+    m_vertices[2] = pos + sf::Vector2f(m_size.x, m_size.y);
+    m_vertices[3] = pos + sf::Vector2f(0.0f, m_size.y);
 
     // DEBUG Colour
     m_vertices[0].color = sf::Color(rR, rG, rB);
