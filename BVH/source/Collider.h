@@ -38,7 +38,8 @@ protected:
 protected:
 	sf::Vector2f m_position;
 	sf::Vector2f m_origin;
-	sf::Vector2f* m_vertices = nullptr;
+	float m_angle = 0.f;
+	sf::Vertex* m_vertices = nullptr;
 
 	size_t m_vertexCount;
 };
@@ -74,12 +75,6 @@ public:
 	bool CollideWith(BoxCollider* otherCollider) const override;
 	bool CollideWith(CircleCollider* otherCollider) const override;
 
-	// DEBUG - visual purposes only
-	void SetPosition(sf::Vector2f position) override;
-	void IncrementPosition(sf::Vector2f position) override;
-
-	void SetOrigin(sf::Vector2f origin) override;
-
 	// Size
 	void SetSize(sf::Vector2f size);
 	sf::Vector2f GetSize();
@@ -90,7 +85,5 @@ public:
 
 private:
 	sf::Vector2f m_size;
-	// DEBUG ONLY - visual purposes
-	sf::RectangleShape m_bbVisual;
 };
 #endif
