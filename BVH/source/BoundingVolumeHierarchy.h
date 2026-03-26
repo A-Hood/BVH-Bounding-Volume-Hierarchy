@@ -39,9 +39,6 @@ public:
     void RecalculateBounds(Node* currentNode);
 
 private:
-    // NOTE: This function should not be inside bvh, instead inside its own collision class
-	bool AABBCollision(const BoxCollider& gameObjectA, const BoxCollider& gameObjectB);
-
     sf::FloatRect CalculateBoundingBox(const std::vector<GameObject*>& nodeVector);
 
     bool CheckXLongestSide(const sf::FloatRect& boundingBox);

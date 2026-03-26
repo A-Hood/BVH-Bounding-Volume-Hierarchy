@@ -50,10 +50,6 @@ SearchResult BVH::Search(const GameObject& targetObject) {
 	return result;
 }
 
-// AABB (non-rotated)
-bool BVH::AABBCollision(const BoxCollider& gameObjectA, const BoxCollider& gameObjectB) {
-	return gameObjectA.GetBoundingBox().intersects(gameObjectB.GetBoundingBox());
-}
 // Seperating-Axis Theorem (for polygons)
 
 sf::FloatRect BVH::CalculateBoundingBox(const std::vector<GameObject*>& nodeVector) {
@@ -172,7 +168,7 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 
 void BVH::RecursiveSearch(const GameObject& targetObject, Node* currentNode) {
 	// If the searchRect is not within this current node, do not proceed
-	if (!AABBCollision(targetObject, *currentNode))
+	if (!targetObject.CollideWith(currentNode))
 	{
 		return;
 	}
@@ -189,7 +185,7 @@ void BVH::RecursiveSearch(const GameObject& targetObject, Node* currentNode) {
 	// Check collisions with object inside of node
 	for (GameObject* gameObject : currentNode->m_colliders)
 	{
-		if (AABBCollision(targetObject, *gameObject))
+		if (targetObject.CollideWith(gameObject))
 		{
 			m_collisionQueue.emplace_back(gameObject);
 		}

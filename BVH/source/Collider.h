@@ -2,43 +2,94 @@
 #define COLLIDER_H
 #include <SFML/Graphics.hpp>
 
-// Currently only just a box collider,
-// However in the future this should be a base class, other classes such as box and circle colliders would derive off this base class
-class BoxCollider : public sf::Drawable
+class CircleCollider;
+class BoxCollider;
+
+// Collider is the base class
+class Collider
+{
+public:
+	Collider() = default;
+	virtual ~Collider() = default;
+public:
+	// Collisions
+	virtual bool CollideWith(Collider* otherCollider) const = 0;
+	virtual bool CollideWith(BoxCollider* otherCollider) const = 0;
+	virtual bool CollideWith(CircleCollider* otherCollider) const = 0;
+
+	// Positions
+	virtual void SetPosition(sf::Vector2f position);
+	virtual void IncrementPosition(sf::Vector2f position);
+	sf::Vector2f GetPosition() const;
+
+	// Origin
+	virtual void SetOrigin(sf::Vector2f origin);
+	sf::Vector2f GetOrigin();
+
+	// Collider creation
+	void SetVertexCount(size_t vertexCount);
+	virtual void CreateCollider() = 0;
+
+protected:
+	static bool CircleCircleCollision(const Collider* colliderA, const Collider* colliderB);
+	static bool BoxCircleCollision(const BoxCollider* colliderA, const CircleCollider* colliderB);
+	static bool BoxBoxCollision(const BoxCollider* colliderA, const BoxCollider* colliderB);
+
+protected:
+	sf::Vector2f m_position;
+	sf::Vector2f m_origin;
+	sf::Vector2f* m_vertices = nullptr;
+
+	size_t m_vertexCount;
+};
+
+class CircleCollider : public Collider, sf::Drawable
+{
+	// NEED TO DO
+public:
+	CircleCollider() = default;
+	~CircleCollider() override = default;
+
+public:
+	// Create collider
+	void CreateCollider() override;
+
+	// Collisions
+	bool CollideWith(Collider* otherCollider) const override;
+	bool CollideWith(BoxCollider* otherCollider) const override;
+	bool CollideWith(CircleCollider* otherCollider) const override;
+};
+
+class BoxCollider : public Collider, public sf::Drawable
 {
 public:
 	BoxCollider() = default;
-	virtual ~BoxCollider() override = default;
-
+	~BoxCollider() override = default;
 public:
-	// Positions
-	void SetPosition(sf::Vector2f position);
-	void IncrementPosition(sf::Vector2f position);
-	sf::Vector2f GetPosition();
+	// Collider
+	void CreateCollider() override;
 
-	// Origin
-	void SetOrigin(sf::Vector2f origin);
-	sf::Vector2f GetOrigin();
+	// Collisions
+	bool CollideWith(Collider* otherCollider) const override;
+	bool CollideWith(BoxCollider* otherCollider) const override;
+	bool CollideWith(CircleCollider* otherCollider) const override;
+
+	// DEBUG - visual purposes only
+	void SetPosition(sf::Vector2f position) override;
+	void IncrementPosition(sf::Vector2f position) override;
+
+	void SetOrigin(sf::Vector2f origin) override;
 
 	// Size
 	void SetSize(sf::Vector2f size);
 	sf::Vector2f GetSize();
-
-	// Collider creation
-	void SetVertexCount(size_t vertexCount);
-	void CreateCollider();
-	sf::FloatRect GetBoundingBox() const;
 
 
 	// DEBUG
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
 private:
-	sf::FloatRect m_boundingBox;
-	sf::Vector2f m_origin;
-	sf::Vector2f* m_vertices = nullptr;
-
-	size_t m_vertexCount;
+	sf::Vector2f m_size;
 	// DEBUG ONLY - visual purposes
 	sf::RectangleShape m_bbVisual;
 };
