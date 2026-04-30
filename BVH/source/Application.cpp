@@ -93,10 +93,7 @@ void Application::Update() {
 		m_window.draw(go->rectVisual);
 	}
 	/* BVH Visualisation */
-	for (auto node : m_bvh.m_nodes) {
-		m_window.draw(node->bbVisual);
-		node->ChangeVisibility(currentDepth);
-	}
+	DrawNodes(m_bvh.GetMasterNode());
 
 	// Perform search
 	result = m_bvh.Search(birdObject);
@@ -120,5 +117,21 @@ void Application::Update() {
 
 void Application::Close() {
 	LOG("Application Closed")
+}
+
+void Application::DrawNodes(Node* currentNode)
+{
+	m_window.draw(currentNode->bbVisual);
+	currentNode->ChangeVisibility(currentDepth);
+
+	if (currentNode->childA != nullptr)
+	{
+		DrawNodes(currentNode->childA);
+	}
+	if (currentNode->childB != nullptr)
+	{
+		DrawNodes(currentNode->childB);
+	}
+
 }
 

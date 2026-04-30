@@ -9,10 +9,9 @@ void BVH::Generate() {
 	auto t1 = std::chrono::high_resolution_clock::now();
 #endif
 
-	Node* masterNode = new Node();
-	m_nodes.emplace_back(masterNode);
-	masterNode->DefineColliders(m_colliders);
-	CreateNewNode(masterNode, 1, 18);
+	m_masterNode = new Node();
+	m_masterNode->DefineColliders(m_colliders);
+	CreateNewNode(m_masterNode, 1, 18);
 
 #if _BVHDEBUG
 	auto t2 = std::chrono::high_resolution_clock::now();
@@ -27,7 +26,7 @@ SearchResult BVH::Search(FloatRect _rect) {
 
     // Traverse through the bvh, then check objects within that node
     auto t1 = std::chrono::high_resolution_clock::now();
-    RecursiveSearch(_rect, m_nodes[0]); // start search at master node
+    RecursiveSearch(_rect, m_masterNode); // start search at master node
     auto t2 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float, std::milli> bvhSearch = t2 - t1;
 
@@ -145,11 +144,9 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 	}
 
 	Node* childA = new Node();
-	m_nodes.emplace_back(childA);
 	currentNode->DefineChildA(childA);
 
 	Node* childB = new Node();
-	m_nodes.emplace_back(childB);
 	currentNode->DefineChildB(childB);
 
 	// Define parents

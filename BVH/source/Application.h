@@ -29,6 +29,8 @@ public:
 	void Update();
 	void Close();
 private:
+	void DrawNodes(Node* currentNode);
+private:
 	APPLICATION_SETTINGS APP_SETTINGS = APPLICATION_SETTINGS();
 
 	sf::RenderWindow m_window;

@@ -38,6 +38,11 @@ public:
 		return m_collisionQueue;
     }
 
+    Node* GetMasterNode() const
+    {
+        return m_masterNode;
+    }
+
     SearchResult Search(FloatRect _rect);
 private:
 	bool AABBCollision(FloatRect _boxA, FloatRect _boxB);
@@ -55,10 +60,9 @@ private:
 
 public:
     void RecalculateBounds(Node* currentNode);
-    std::vector<Node*> m_nodes;
     std::vector<Collider*> m_colliders;
 private:
-
+    Node* m_masterNode = nullptr;
 	std::vector<Collider*> m_collisionQueue;
 	std::vector<Node*> m_collisionNodesQueue;
 
