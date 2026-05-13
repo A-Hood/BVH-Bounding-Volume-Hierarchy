@@ -14,11 +14,6 @@ void Application::CreateApplication() {
 	m_window.setKeyRepeatEnabled(false);
 	m_window.setFramerateLimit(60);
 
-	// Bird object
-	birdObject.SetPosition({1000, 1000});
-	birdObject.SetSize({64, 64});
-	birdObject.CreateCollider();
-
 	// Generate random colliders (DEBUG) I hate this, everything including collision will be reworked
 	for (int x = 0; x < 5; x++)
 	{
@@ -106,7 +101,7 @@ void Application::Update() {
 
 	// Run test collision
 	for (auto& col : m_objects) {
-		if (Physics::CollisionDetection::PolygonOnPolygonSATCollision(m_testCollider, col)) {
+		if (Physics::CollisionDetection::PolygonOnPolygonSATCollision(&m_testCollider, &col)) {
 			// If collided with one object, as of now set the object to red to show collision
 			m_testCollider.ChangeColour(sf::Color::Red);
 			break;

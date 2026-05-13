@@ -3,16 +3,17 @@
 #include <valarray>
 
 #include "Application.h"
+#include "Physics/SATCollision.h"
 
 // Base collider --------------------------------------------------------------------------------------------------------------
-void Collider::SetPosition(sf::Vector2f position)
+void Collider::SetPosition(sf::Vector2f _pos)
 {
-    m_position = position;
+    m_position = _pos;
 }
 
-void Collider::IncrementPosition(sf::Vector2f position)
+void Collider::IncrementPosition(sf::Vector2f _pos)
 {
-    m_position += position;
+    m_position += _pos;
 }
 
 sf::Vector2f Collider::GetPosition() const
@@ -35,97 +36,24 @@ void Collider::SetVertexCount(size_t vertexCount)
     m_vertexCount = vertexCount;
 }
 
-bool Collider::CircleCircleCollision(const Collider* colliderA, const Collider* colliderB)
-{
-    return false;
-}
-
-bool Collider::BoxCircleCollision(const BoxCollider* colliderA, const CircleCollider* colliderB)
-{
-    return false;
-}
-
-bool Collider::BoxBoxCollision(const BoxCollider* colliderA, const BoxCollider* colliderB)
-{
-    return false;
-}
-
 // Circle Collider --------------------------------------------------------------------------------------------------------------
-void CircleCollider::CreateCollider()
-{
+void CircleCollider::CreateCollider() {
 
 }
 
-bool CircleCollider::CollideWith(Collider* otherCollider) const
-{
+bool CircleCollider::CollideWith(Collider* otherCollider) const {
     return false;
 }
 
-bool CircleCollider::CollideWith(BoxCollider* otherCollider) const
-{
-    return Collider::BoxCircleCollision(otherCollider, this);
-}
-
-bool CircleCollider::CollideWith(CircleCollider* otherCollider) const
-{
-    return Collider::CircleCircleCollision(otherCollider, this);
-}
-
-// Box Collider --------------------------------------------------------------------------------------------------------------
-
-void BoxCollider::CreateCollider()
-{
-    //m_vertices = new sf::Vertex[m_vertexCount];
-    //// DEBUG ONLY
-    //int rR = rand() % 255;
-    //int rG = rand() % 255;
-    //int rB = rand() % 255;
-    //
-    //sf::Vector2f pos = m_position - m_origin;
-    //m_vertices[0] = pos + sf::Vector2f(0.f, 0.f);
-    //m_vertices[1] = pos + sf::Vector2f(m_size.x, 0.0f);
-    //m_vertices[2] = pos + sf::Vector2f(m_size.x, m_size.y);
-    //m_vertices[3] = pos + sf::Vector2f(0.0f, m_size.y);
-    //
-    //// DEBUG Colour
-    //m_vertices[0].color = sf::Color(rR, rG, rB);
-    //m_vertices[1].color = sf::Color(rR, rG, rB);
-    //m_vertices[2].color = sf::Color(rR, rG, rB);
-    //m_vertices[3].color = sf::Color(rR, rG, rB);
-
-}
-
-bool BoxCollider::CollideWith(Collider* otherCollider) const
-{
+bool CircleCollider::CollideWith(PolygonCollider* otherCollider) const { // Circle, Polygon
     return false;
 }
 
-bool BoxCollider::CollideWith(BoxCollider* otherCollider) const
-{
-    return Collider::BoxBoxCollision(otherCollider, this);
+bool CircleCollider::CollideWith(CircleCollider* otherCollider) const { // Circle, Circle
+    return false;
 }
 
-bool BoxCollider::CollideWith(CircleCollider* otherCollider) const
-{
-    return Collider::BoxCircleCollision(this, otherCollider);
-}
-
-void BoxCollider::SetSize(sf::Vector2f size)
-{
-    m_size = size;
-}
-
-sf::Vector2f BoxCollider::GetSize()
-{
-    return m_size;
-}
-
-void BoxCollider::draw(sf::RenderTarget& target, sf::RenderStates states) const
-{
-    //target.draw(m_vertices, 4, sf::PrimitiveType::Quads);
-    //target.draw(m_bbVisual, states);
-}
-
+// Polygon Collider --------------------------------------------------------------------------------------------------------------
 void PolygonCollider::CreateCollider() {
     m_vertArray.setPrimitiveType(sf::Quads);
     m_vertArray.resize(m_vertices.size());
@@ -139,15 +67,37 @@ bool PolygonCollider::CollideWith(Collider* otherCollider) const {
     return false;
 }
 
-bool PolygonCollider::CollideWith(BoxCollider* otherCollider) const {
-    return false;
+bool PolygonCollider::CollideWith(PolygonCollider* otherCollider) const {
+    return Physics::CollisionDetection::PolygonOnPolygonSATCollision(this, otherCollider);
 }
+
 
 bool PolygonCollider::CollideWith(CircleCollider* otherCollider) const {
     return false;
 }
 
+void PolygonCollider::SetPosition(sf::Vector2f _pos) {
+    // I need to simplify this to work using local rect + global rect, this is the problem with working with
+    // a code base that was written a few months ago and needs reworking
+
+    // Get local vertex positions
+    for (auto& vec : m_vertices) {
+        vec -= m_position;
+    }
+
+    Collider::SetPosition(_pos);
+
+    // Add to all vertex positions
+    for (auto& vec : m_vertices) {
+        vec += _pos;
+    }
+    // Set to origin
+    m_origin = _pos;
+}
+
 void PolygonCollider::IncrementPosition(sf::Vector2f _pos) {
+    Collider::IncrementPosition(_pos);
+
     // Add to all vertex positions
     for (auto& vec : m_vertices) {
         vec += _pos;
@@ -174,4 +124,27 @@ void PolygonCollider::draw(sf::RenderTarget& target, sf::RenderStates states) co
     target.draw(m_vertArray, states);
 }
 
+void BoxCollider::SetSize(sf::Vector2f _size) {
+    // Keep top-left the same
 
+    // Top-Right
+    m_vertices[1] = { m_vertices[1].x + _size.x, m_vertices[1].y };
+    // Bottom-Right
+    m_vertices[2] = { m_vertices[2].x + _size.x, m_vertices[2].y + _size.y };
+    // Bottom-Left
+    m_vertices[3] = { m_vertices[3].x, m_vertices[3].y + _size.y };
+
+    UpdateVertexArray();
+}
+
+sf::Vector2f BoxCollider::GetSize() const {
+    return m_size;
+}
+
+void BoxCollider::SetPosition(sf::Vector2f position) {
+
+}
+
+void BoxCollider::IncrementPosition(sf::Vector2f position) {
+    PolygonCollider::IncrementPosition(position);
+}

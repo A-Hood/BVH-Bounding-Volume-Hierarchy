@@ -7,7 +7,9 @@
 // - Make rotation work properly
 // - Try and find optimisations in the SAT collision
 // - Major reworks across Collider + Application, implementing better and easier Collision usage
+// - Origin SHOULD NOT move, it should be local to the shape
 
+class PolygonCollider;
 class CircleCollider;
 class BoxCollider;
 
@@ -20,12 +22,12 @@ public:
 public:
 	// Collisions
 	virtual bool CollideWith(Collider* otherCollider) const = 0;
-	virtual bool CollideWith(BoxCollider* otherCollider) const = 0;
+	virtual bool CollideWith(PolygonCollider* otherCollider) const = 0;
 	virtual bool CollideWith(CircleCollider* otherCollider) const = 0;
 
 	// Positions
-    void SetPosition(sf::Vector2f position);
-    void IncrementPosition(sf::Vector2f position);
+    virtual void SetPosition(sf::Vector2f _pos) = 0;
+    virtual void IncrementPosition(sf::Vector2f _pos) = 0;
 	sf::Vector2f GetPosition() const;
 
 	// Origin
@@ -39,10 +41,6 @@ public:
 	// Update collider
 	virtual void UpdateCollider() = 0;
 
-protected:
-	static bool CircleCircleCollision(const Collider* colliderA, const Collider* colliderB);
-	static bool BoxCircleCollision(const BoxCollider* colliderA, const CircleCollider* colliderB);
-	static bool BoxBoxCollision(const BoxCollider* colliderA, const BoxCollider* colliderB);
 
 protected:
 	sf::Vector2f m_position;
@@ -68,36 +66,8 @@ public:
 
 	// Collisions
 	bool CollideWith(Collider* otherCollider) const override;
-	bool CollideWith(BoxCollider* otherCollider) const override;
+	bool CollideWith(PolygonCollider* otherCollider) const override;
 	bool CollideWith(CircleCollider* otherCollider) const override;
-};
-
-class BoxCollider : public Collider, public sf::Drawable
-{
-public:
-	BoxCollider() = default;
-	~BoxCollider() override = default;
-public:
-	// Create collider
-	void CreateCollider() override;
-	void UpdateCollider() override {
-		return;
-	}
-
-	// Collisions
-	bool CollideWith(Collider* otherCollider) const override;
-	bool CollideWith(BoxCollider* otherCollider) const override;
-	bool CollideWith(CircleCollider* otherCollider) const override;
-
-	// Size
-	void SetSize(sf::Vector2f size);
-	sf::Vector2f GetSize();
-
-	// DEBUG
-	void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-
-private:
-	sf::Vector2f m_size;
 };
 
 class PolygonCollider : public Collider, public sf::Drawable
@@ -118,10 +88,10 @@ public:
 
 	// Collisions
 	bool CollideWith(Collider* otherCollider) const override;
-	bool CollideWith(BoxCollider* otherCollider) const override;
+	bool CollideWith(PolygonCollider* otherCollider) const override;
 	bool CollideWith(CircleCollider* otherCollider) const override;
 
-	std::vector<sf::Vector2f>& GetVertices() {
+	const std::vector<sf::Vector2f>& GetVertices() const {
 		return m_vertices;
 	}
 
@@ -132,7 +102,8 @@ public:
 	    }
 	}
 
-	void IncrementPosition(sf::Vector2f _pos);
+	void SetPosition(sf::Vector2f _pos) override;
+	void IncrementPosition(sf::Vector2f _pos) override;
 	void IncrementRotation(float _rot);
 
 	// very temp, will move all logic into a new visuals class
@@ -145,6 +116,9 @@ public:
 	// DEBUG
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
+protected:
+	std::vector<sf::Vector2f> m_vertices;
+
 private:
 	// Flag for whether polygon is convex
 	bool m_isConvex = true;
@@ -154,7 +128,39 @@ private:
 
 	// Vertex array
 	sf::VertexArray m_vertArrayNormal; // the origin vertex array with no position or rotation applied
-	std::vector<sf::Vector2f> m_vertices;
 	sf::VertexArray m_vertArray;
 };
+
+// PolygonCollider with defined Box parameters
+class BoxCollider : public PolygonCollider {
+public:
+	BoxCollider(const sf::Vector2f& _pos, const sf::Vector2f& _size) : m_size(_size) {
+		m_vertices.emplace_back(_pos.x, _pos.y); // Top-Left
+		m_vertices.emplace_back(_pos.x + _size.x, _pos.y); // Top-Right
+		m_vertices.emplace_back(_pos.x + _size.x, _pos.y + _size.y); // Bottom-Right
+		m_vertices.emplace_back(_pos.x, _pos.y + _size.y); // Bottom-Left
+	}
+
+	// Creates 4 vertices, must set to a real value before usage
+	BoxCollider() {
+		m_vertices.emplace_back(0.0f, 0.0f);
+		m_vertices.emplace_back(0.0f, 0.0f);
+		m_vertices.emplace_back(0.0f, 0.0f);
+		m_vertices.emplace_back(0.0f, 0.0f);
+	}
+
+	~BoxCollider() override = default;
+
+public:
+	void SetSize(sf::Vector2f _size);
+    sf::Vector2f GetSize() const;
+
+	void SetPosition(sf::Vector2f position) override;
+	void IncrementPosition(sf::Vector2f position) override;
+
+private:
+	sf::Vector2f m_size;
+};
+
+
 #endif

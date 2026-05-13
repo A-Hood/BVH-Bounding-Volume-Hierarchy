@@ -11,10 +11,10 @@
 
 namespace Physics {
     namespace CollisionDetection {
-        static float ProjectVertex(const sf::Vector2f& _axis, const sf::Vector2f& _vert);
+        static float ProjectVertex(const sf::Vector2f& _axis, const sf::Vector2f& _vert) ;
 
         // SAT Collision Detection
-        inline static bool PolygonOnPolygonSATCollision(PolygonCollider& _poly1, PolygonCollider& _poly2) {
+        static bool PolygonOnPolygonSATCollision(const PolygonCollider* _poly1, const PolygonCollider* _poly2) {
             // Get edge along two vertices
             // Get normal, project vertices onto new axis
             // Get min and max of shape vertices in relation to axis
@@ -22,15 +22,16 @@ namespace Physics {
             // If any do not, exit algo as there is a seperating axis
 
             // Get vertices from both polys
-            auto vertArray1 = &_poly1.GetVertices();
-            auto vertArray2 = &_poly2.GetVertices();
+            //auto vertArray1 = _poly1.GetVertices();
+            auto vertArray1 = &_poly1->GetVertices();
+            auto vertArray2 = &_poly2->GetVertices();
 
             // Perform checks against both shapes
             for (int shapeNum = 0; shapeNum < 2; shapeNum++) {
                 // If already checked the first shape, check the other against the first
                 if (shapeNum == 1) {
-                    vertArray1 = &_poly2.GetVertices();
-                    vertArray2 = &_poly1.GetVertices();
+                    vertArray1 = &_poly2->GetVertices();
+                    vertArray2 = &_poly1->GetVertices();
                 }
 
                 // Check shape against other
