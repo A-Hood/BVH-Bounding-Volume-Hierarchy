@@ -29,8 +29,6 @@ public:
 	//std::vector<GameObject*>& GetCollisionQueue();
     // Create
     void Generate();
-    // Nodes
-    std::vector<Node*>& GetNodes();
 
     // Search functions
     SearchResult Search(const GameObject& targetObject);
@@ -53,7 +51,8 @@ private:
 	std::vector<Node*> m_nodesQueue;
 
     std::vector<GameObject*> m_ptrGameObjects;
-    std::vector<Node*> m_nodes;
+    Node* m_masterNode = nullptr;
+
     int m_maximumDepth;
 };
 

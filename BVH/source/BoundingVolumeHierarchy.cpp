@@ -11,8 +11,8 @@ void BVH::Generate() {
 #endif
 
 	Node* masterNode = new Node();
-	m_nodes.emplace_back(masterNode);
 	masterNode->DefineObjects(m_ptrGameObjects);
+	m_masterNode = masterNode;
 	CreateNewNode(masterNode, 1, 18);
 
 #if _BVHDEBUG
@@ -20,11 +20,6 @@ void BVH::Generate() {
 	std::chrono::duration<float, std::milli> time = t2 - t1;
 	std::cout << "Time to create BVH: " << std::to_string(time.count()) << "ms" << std::endl;
 #endif
-}
-
-std::vector<Node*>& BVH::GetNodes()
-{
-	return m_nodes;
 }
 
 void BVH::AddGameObject(GameObject* collider)
@@ -148,11 +143,9 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 	}
 
 	Node* childA = new Node();
-	m_nodes.emplace_back(childA);
 	currentNode->DefineChildA(childA);
 
 	Node* childB = new Node();
-	m_nodes.emplace_back(childB);
 	currentNode->DefineChildB(childB);
 
 	// Define parents

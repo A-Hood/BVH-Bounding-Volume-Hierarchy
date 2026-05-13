@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include "Random.h"
+#include "Physics/SATCollision.h"
 
 Application::Application() : m_bvh()
 {
@@ -18,36 +19,44 @@ void Application::CreateApplication() {
 	birdObject.SetSize({64, 64});
 	birdObject.CreateCollider();
 
-	// Generate random colliders (DEBUG)
+	// Generate random colliders (DEBUG) I hate this, everything including collision will be reworked
 	for (int x = 0; x < 5; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
+		float size = 50.0f;
 
-		m_gameObjects.emplace_back(sf::Vector2f(randomX, randomY), sf::Vector2f(64, 64), 4);
+        // DEBUG ONLY
+        int rR = rand() % 255;
+        int rG = rand() % 255;
+        int rB = rand() % 255;
+
+		// Create using random position
+		sf::Vector2f newPos1 = sf::Vector2f{ static_cast<float>(randomX), static_cast<float>(randomY) } + sf::Vector2f{ 0.0f, 0.0f };
+		sf::Vector2f newPos2 = sf::Vector2f{ static_cast<float>(randomX), static_cast<float>(randomY) } + sf::Vector2f{ size, 0.0f };
+		sf::Vector2f newPos3 = sf::Vector2f{ static_cast<float>(randomX), static_cast<float>(randomY) } + sf::Vector2f{ size, size };
+		sf::Vector2f newPos4 = sf::Vector2f{ static_cast<float>(randomX), static_cast<float>(randomY) } + sf::Vector2f{ 0.0f, size };
+
+        // DEBUG Colour
+		//newVert1.color = sf::Color(rR, rG, rB);
+		//newVert2.color = sf::Color(rR, rG, rB);
+		//newVert3.color = sf::Color(rR, rG, rB);
+		//newVert4.color = sf::Color(rR, rG, rB);
+
+		std::vector<sf::Vector2f> vecs = { newPos1, newPos2, newPos3, newPos4 };
+		m_objects.emplace_back(vecs);
+		m_objects.at(x).CreateCollider();
 	}
 
-	// Setup BVH
-	for (GameObject& col : m_gameObjects) {
-		m_bvh.AddGameObject(&col);
-	}
-	// Creates the bhv from the given objects
-	//m_bvh.Generate();
-
-	SearchResult result = m_bvh.Search(birdObject);
-	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
-	std::cout << "Amount of nodes: " << result.nodes.size() << std::endl;
-
-	/*
-	auto t1 = std::chrono::high_resolution_clock::now();
-	// Recalculate bounds for all collided nodes
-	for (Node* node : result.nodes) {
-		m_bvh.RecalculateBounds(node);
-	}
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> bvhRecalculate = t2 - t1;
-	std::cout << "Time taken: " << bvhRecalculate.count() << "ms" << std::endl;
-	*/
+	// Create 
+	float size = 100.0f;
+	sf::Vector2f newPos1 = sf::Vector2f{ 0.0f, 0.0f } + sf::Vector2f{ 0.0f, 0.0f };
+	sf::Vector2f newPos2 = sf::Vector2f{ 0.0f, 0.0f } + sf::Vector2f{ size, 0.0f };
+	sf::Vector2f newPos3 = sf::Vector2f{ 0.0f, 0.0f } + sf::Vector2f{ size, size };
+	sf::Vector2f newPos4 = sf::Vector2f{ 0.0f, 0.0f } + sf::Vector2f{ 0.0f, size };
+	std::vector<sf::Vector2f> vecs = { newPos1, newPos2, newPos3, newPos4 };
+	m_testCollider = PolygonCollider(vecs);
+	m_testCollider.CreateCollider();
 }
 
 void Application::Run() {
@@ -56,18 +65,6 @@ void Application::Run() {
 		while (m_window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
 				m_window.close();
-
-			if (event.type == sf::Event::KeyPressed)
-			{
-				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up)) {
-					currentDepth++;
-					LOG(currentDepth)
-				}
-				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
-					currentDepth--;
-					LOG(currentDepth)
-				}
-			}
 		}
 
 		m_window.clear();
@@ -80,51 +77,44 @@ void Application::Run() {
 
 void Application::Update() {
 	float moveSpeed = 3.0f;
-	SearchResult result;
+	float rotationSpeed = 3.0f;
 	// Movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-		birdObject.IncrementPosition({0, -moveSpeed});
+		m_testCollider.IncrementPosition({ 0, -moveSpeed });
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-		birdObject.IncrementPosition({0, moveSpeed});
+		m_testCollider.IncrementPosition({ 0, moveSpeed });
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-		birdObject.IncrementPosition({-moveSpeed, 0});
+		m_testCollider.IncrementPosition({ -moveSpeed, 0 });
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-		birdObject.IncrementPosition({moveSpeed, 0});
+		m_testCollider.IncrementPosition({ moveSpeed, 0 });
 	}
 
-#if _BVHDEBUG
-	/* Objects Visualisation */
-	for (const auto& gameObject : m_gameObjects) {
-		m_window.draw(gameObject);
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
+		m_testCollider.IncrementRotation(-rotationSpeed);
 	}
-	/* BVH Visualisation */
-	for (auto node : m_bvh.GetNodes()) {
-		m_window.draw(node->bbVisual);
-		node->ChangeVisibility(currentDepth);
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
+		m_testCollider.IncrementRotation(rotationSpeed);
+	}
+	
+	// draw each poly collider
+	for (const auto& col : m_objects) {
+	    m_window.draw(col);
 	}
 
-	// Perform search
-	result = m_bvh.Search(birdObject);
-	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
-	std::cout << "Amount of nodes: " << result.nodes.size() << std::endl;
-	//std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
+	// Run test collision
+	for (auto& col : m_objects) {
+		if (Physics::CollisionDetection::PolygonOnPolygonSATCollision(m_testCollider, col)) {
+			// If collided with one object, as of now set the object to red to show collision
+			m_testCollider.ChangeColour(sf::Color::Red);
+			break;
+		}
+		m_testCollider.ChangeColour(sf::Color::White);
+	}
 
-	// Set object red if collision occurs
-	/*
-	if (!result.collisions.empty()) {
-		birdShape.setFillColor({ 255, 0, 0, 255 });
-	}
-	else {
-		birdShape.setFillColor({ 255, 255, 255, 255 });
-	}
-	birdShape.setPosition(birdObject.left, birdObject.top);
-	birdShape.setSize({ birdObject.width, birdObject.height });
-	*/
-	m_window.draw(birdObject);
-#endif
+	m_window.draw(m_testCollider);
 }
 
 void Application::Close() {

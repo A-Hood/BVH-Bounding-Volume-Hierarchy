@@ -149,6 +149,7 @@
     <ClInclude Include="source\Collider.h" />
     <ClInclude Include="source\GameObject.h" />
     <ClInclude Include="source\Node.h" />
+    <ClInclude Include="source\Physics\SATCollision.h" />
     <ClInclude Include="source\Random.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

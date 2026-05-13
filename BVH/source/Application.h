@@ -35,13 +35,16 @@ private:
 
 	// BVH
 	BVH m_bvh;
+	size_t currentDepth = 0;
 
 	// Game objects
 	std::vector<GameObject> m_gameObjects;
 
 	// DEBUG ------------------------------------------------------------------------
 	GameObject birdObject;
-	size_t currentDepth = 0;
+
+	PolygonCollider m_testCollider;
+	std::vector<PolygonCollider> m_objects;
 };
 
 #endif
