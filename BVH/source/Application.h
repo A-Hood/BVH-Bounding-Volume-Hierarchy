@@ -28,8 +28,7 @@ public:
 	void Run();
 	void Update();
 	void Close();
-private:
-	void DrawNodes(Node* currentNode);
+
 private:
 	APPLICATION_SETTINGS APP_SETTINGS = APPLICATION_SETTINGS();
 
@@ -42,6 +41,7 @@ private:
 	FloatRect birdObject = { 1000, 1000, 100, 100 };
 	sf::RectangleShape birdShape;
 	size_t currentDepth = 0;
+	size_t m_numberOfObjects = 500;
 };
 
 #endif
