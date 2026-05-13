@@ -16,6 +16,8 @@
 // Simple application class for better readability, will not be included in final BVH
 
 class Application {
+public:
+	Application() : m_bvh() {}
 	struct APPLICATION_SETTINGS {
 		const uint16_t SCREEN_WIDTH = 1920;
 		const uint16_t SCREEN_HEIGHT = 1080;
@@ -30,18 +32,18 @@ public:
 	void Close();
 
 private:
-	APPLICATION_SETTINGS APP_SETTINGS = APPLICATION_SETTINGS();
+	APPLICATION_SETTINGS APP_SETTINGS;
 
 	sf::RenderWindow m_window;
 
-	BVH m_bvh = BVH();
+	BVH m_bvh;
 
 	// DEBUG ------------------------------------------------------------------------
 	std::vector<Collider> colliders;
 	FloatRect birdObject = { 1000, 1000, 100, 100 };
 	sf::RectangleShape birdShape;
 	size_t currentDepth = 0;
-	size_t m_numberOfObjects = 500;
+	size_t m_numberOfObjects = 5000;
 };
 
 #endif

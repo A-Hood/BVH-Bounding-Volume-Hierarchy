@@ -4,9 +4,21 @@
 #include <chrono>
 #include <iostream>
 
+#include "Application.h"
+
 BVH::BVH(size_t _maxDepth)
 {
 	m_maximumDepth = _maxDepth;
+}
+
+BVH::~BVH()
+{
+	// Clean the BVH
+	m_dynamicNodeQueue.clear();
+	m_collidedObjectsQueue.clear();
+	m_colliders.clear();
+
+	TraversalNodeDestroy(m_masterNode);
 }
 
 
@@ -28,7 +40,7 @@ void BVH::Generate()
 	m_masterNode = new Node();
 	m_masterNode->DefineColliders(m_colliders);
 	// Start the recursion
-	CreateNewNode(m_masterNode, 1, 18);
+	CreateNewNode(m_masterNode, 1, 500);
 
 #if _BVHDEBUG
 	auto t2 = std::chrono::high_resolution_clock::now();
@@ -104,9 +116,20 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 		return;
 	}
 
-	// Create empty vectors
-	std::vector<Collider*> leftSide;
-	std::vector<Collider*> rightSide;
+	// Create child nodes
+	Node* childA = new Node();
+	currentNode->DefineChildA(childA);
+
+	Node* childB = new Node();
+	currentNode->DefineChildB(childB);
+
+	// Define parents
+	currentNode->childA->DefineParentNode(currentNode);
+	currentNode->childB->DefineParentNode(currentNode);
+
+	// Get the vectors from each child node
+	auto& leftSide = currentNode->childA->GetCollders();
+	auto& rightSide = currentNode->childB->GetCollders();
 	// Reserve space to increase performance
 	size_t reserveSize = currentNode->m_colliders.size() / 2;
 	leftSide.reserve(reserveSize);
@@ -125,21 +148,6 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 		boundaryMidpoint = boundingBox.top + (boundingBox.height / 2);
 		AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint);
 	}
-
-	// Create child nodes
-	Node* childA = new Node();
-	currentNode->DefineChildA(childA);
-
-	Node* childB = new Node();
-	currentNode->DefineChildB(childB);
-
-	// Define parents
-	currentNode->childA->DefineParentNode(currentNode);
-	currentNode->childB->DefineParentNode(currentNode);
-
-	currentNode->childA->DefineColliders(leftSide);
-	currentNode->childB->DefineColliders(rightSide);
-
 	CreateNewNode(currentNode->childA, currentDepth + 1, maximumDepth);
 	CreateNewNode(currentNode->childB, currentDepth + 1, maximumDepth);
 }
@@ -226,6 +234,21 @@ void BVH::DefineNodeType(Node* _currentNode, bool _nodeIsStatic)
 	}
 	m_dynamicNodeQueue.emplace_back(_currentNode);
 }
+
+void BVH::TraversalNodeDestroy(const Node* _currentNode)
+{
+	if (_currentNode->childA != nullptr)
+	{
+		TraversalNodeDestroy(_currentNode->childA);
+	}
+	if (_currentNode->childB != nullptr)
+	{
+		TraversalNodeDestroy(_currentNode->childB);
+	}
+	// We are at a leaf node
+	delete _currentNode;
+}
+
 void BVH::RecursiveSearch(const FloatRect& _searchRect, const Node* _currentNode) {
 	// If the searchRect is not within this current node, do not proceed
 	if (!AABBCollision(_searchRect, _currentNode->boundingBox))
@@ -235,9 +258,12 @@ void BVH::RecursiveSearch(const FloatRect& _searchRect, const Node* _currentNode
 	// If the child nodes are a nullptr, therefore this is the leaf node.
 	// Check objects within the leaf node
 	// Else if this is not a leaf node, recurse
-	if (_currentNode->childA != nullptr && _currentNode->childB != nullptr)
+	if (_currentNode->childA != nullptr)
 	{
 		RecursiveSearch(_searchRect, _currentNode->childA);
+	}
+	if (_currentNode->childB != nullptr)
+	{
 		RecursiveSearch(_searchRect, _currentNode->childB);
 		return;
 	}

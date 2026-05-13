@@ -2,7 +2,6 @@
 #define BVH_H
 
 #include <vector>
-
 #include "Node.h"
 
 struct SearchResult {
@@ -17,7 +16,7 @@ public:
     // Constructor / Destructor
     BVH() = default;
     BVH(size_t _maxDepth);
-    ~BVH() = default;
+    ~BVH();
 public:
     // --- Add colliders to the bvh ---
     void AddCollider(Collider* _collider);
@@ -42,6 +41,8 @@ private:
 	    Node* currentNode,
 	    float boundaryMidpoint);
     inline void DefineNodeType(Node* _currentNode, bool _nodeIsStatic);
+    // --- Destroy BVH ---
+    void TraversalNodeDestroy(const Node* _currentNode);
 
     // --- Internal search ---
     void RecursiveSearch(const FloatRect& _searchRect, const Node* _currentNode);

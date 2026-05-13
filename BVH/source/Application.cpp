@@ -82,8 +82,8 @@ void Application::Update() {
 
 	// Perform search
 	result = m_bvh.SearchBVH(birdObject);
-	//std::cout << "Time taken to search BVH: " << result.searchTime << "ms" << std::endl;
-	//std::cout << "Amount of objects collided: " << result.numberCollidedObjects << std::endl;
+	std::cout << "Time taken to search BVH: " << result.searchTime << "ms" << std::endl;
+	std::cout << "Amount of objects collided: " << result.numberCollidedObjects << std::endl;
 
 	// Set object red if collision occurs
 	if (result.numberCollidedObjects > 0) {

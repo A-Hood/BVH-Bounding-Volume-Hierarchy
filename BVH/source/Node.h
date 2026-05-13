@@ -13,6 +13,10 @@ public:
 	{
 		m_colliders = _colliders;
 	}
+	std::vector<Collider*>& GetCollders()
+	{
+		return m_colliders;
+	}
 	// Bounds of the Node
 	void DefineBounds(const FloatRect& _boundingBox)
 	{

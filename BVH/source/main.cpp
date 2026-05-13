@@ -7,13 +7,13 @@
  */
 
 int main() {
-    Application* app = new Application();
-    app->CreateApplication();
+    Application app;
+    app.CreateApplication();
 
-    app->Run();
+    app.Run();
 
     // Run has ended, close
-    app->Close();
+    app.Close();
 
     return 0;
 }
