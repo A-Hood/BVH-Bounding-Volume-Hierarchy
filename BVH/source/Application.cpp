@@ -9,7 +9,7 @@ void Application::CreateApplication() {
 	m_window.setFramerateLimit(60);
 
 	// Generate random colliders (DEBUG)
-	for (int x = 0; x < 5; x++)
+	for (size_t x = 0; x < m_numberOfObjects; x++)
 	{
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
@@ -17,26 +17,20 @@ void Application::CreateApplication() {
 		colliders.emplace_back(x, FloatRect(randomX, randomY, 64, 64), false);
 	}
 
+	// Great example of how using SAH is more efficient than slicing the longest node axis
+	//colliders.emplace_back(0, FloatRect(1584, 416, 64, 64));
+	//colliders.emplace_back(1, FloatRect(104, 719, 64, 64));
+	//colliders.emplace_back(2, FloatRect(412, 311, 64, 64));
+	//colliders.emplace_back(3, FloatRect(1698, 332, 64, 64));
+	//colliders.emplace_back(4, FloatRect(1808, 739, 64, 64));
+	//colliders.emplace_back(5, FloatRect(252, 179, 64, 64));
+	//colliders.emplace_back(6, FloatRect(825, 420, 64, 64));
+
 	// Set-up BVH
 	for (Collider& col : colliders) {
 		m_bvh.AddCollider(&col);
 	}
 	m_bvh.Generate();
-
-	SearchResult result = m_bvh.Search(birdObject);
-	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
-	std::cout << "Amount of objects collided: " << result.collisions.size() << std::endl;
-	std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
-
-
-	auto t1 = std::chrono::high_resolution_clock::now();
-	// Recalculate bounds for all collided nodes
-	for (Node* node : result.nodes) {
-		m_bvh.RecalculateBounds(node);
-	}
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> bvhRecalculate = t2 - t1;
-	std::cout << "Time taken: " << bvhRecalculate.count() << "ms" << std::endl;
 }
 
 void Application::Run() {
@@ -89,20 +83,19 @@ void Application::Update() {
 
 #if _BVHDEBUG
 	/* Objects Visualisation */
-	for (const auto& go : m_bvh.m_colliders) {
-		m_window.draw(go->rectVisual);
+	for (const auto& go : colliders) {
+		m_window.draw(go.rectVisual);
 	}
 	/* BVH Visualisation */
-	DrawNodes(m_bvh.GetMasterNode());
+	m_bvh.DrawBVH(m_window, m_bvh.GetMasterNode(), currentDepth);
 
 	// Perform search
-	result = m_bvh.Search(birdObject);
-	std::cout << "Time taken to search BVH: " << result.timeTaken << "ms" << std::endl;
-	std::cout << "Amount of objects collided: " << result.collisions.size() << std::endl;
-	std::cout << "Amount of dynamic nodes collided: " << result.nodes.size() << std::endl;
+	result = m_bvh.SearchBVH(birdObject);
+	//std::cout << "Time taken to search BVH: " << result.searchTime << "ms" << std::endl;
+	//std::cout << "Amount of objects collided: " << result.numberCollidedObjects << std::endl;
 
 	// Set object red if collision occurs
-	if (!result.collisions.empty()) {
+	if (result.numberCollidedObjects > 0) {
 		birdShape.setFillColor({ 255, 0, 0, 255 });
 	}
 	else {
@@ -118,20 +111,3 @@ void Application::Update() {
 void Application::Close() {
 	LOG("Application Closed")
 }
-
-void Application::DrawNodes(Node* currentNode)
-{
-	m_window.draw(currentNode->bbVisual);
-	currentNode->ChangeVisibility(currentDepth);
-
-	if (currentNode->childA != nullptr)
-	{
-		DrawNodes(currentNode->childA);
-	}
-	if (currentNode->childB != nullptr)
-	{
-		DrawNodes(currentNode->childB);
-	}
-
-}
-

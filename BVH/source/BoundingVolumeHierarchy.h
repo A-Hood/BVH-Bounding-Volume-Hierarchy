@@ -2,71 +2,74 @@
 #define BVH_H
 
 #include <vector>
-
 #include "Node.h"
 
 struct SearchResult {
-    ~SearchResult() {
-        collisions.clear();
-        nodes.clear();
-    }
-    std::vector<Collider*> collisions;
-    // we need to save the nodes that had a collision so that we can recalculate all parent nodes
-    // we only want to do this for leaf nodes containing dynamic objects (to be implemented)
-    std::vector<Node*> nodes;
-    float timeTaken;
+    // DEBUG
+    float searchTime = 0;
+    size_t numberCollidedObjects = 0;
 };
 
-class BVH {
+class BVH
+{
 public:
+    // Constructor / Destructor
     BVH() = default;
-    BVH(const int _maxDepth) {
-        m_maximumDepth = _maxDepth;
-    }
-
-    ~BVH() = default;
-
-    // Create
-    void Generate();
-
-    // Update (if dynamic)
-
-    void AddCollider(Collider* _collider) {
-        m_colliders.push_back(_collider);
-    }
-	std::vector<Collider*>& GetCollisionQueue() {
-		return m_collisionQueue;
-    }
-
-    Node* GetMasterNode() const
-    {
-        return m_masterNode;
-    }
-
-    SearchResult Search(FloatRect _rect);
-private:
-	bool AABBCollision(FloatRect _boxA, FloatRect _boxB);
-
-    FloatRect CalculateBoundingBox(const std::vector<Collider*>& nodeVector);
-
-    bool CheckXLongestSide(FloatRect boundingBox);
-	void AssignObjectSide(std::vector<Collider*>& leftSide, std::vector<Collider*>& rightSide, const Node* currentNode, float boundaryMidpoint, bool xIsLongestSide);
-
-    void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth);
-
-    // SEARCH ----------------------------------------------------------------------------------------------------------------------------------------------------------
-    void RecursiveSearch(FloatRect searchRect, Node* currentNode);
-
-
+    BVH(size_t _maxDepth);
+    ~BVH();
 public:
-    void RecalculateBounds(Node* currentNode);
-    std::vector<Collider*> m_colliders;
-private:
-    Node* m_masterNode = nullptr;
-	std::vector<Collider*> m_collisionQueue;
-	std::vector<Node*> m_collisionNodesQueue;
+    // --- Add colliders to the bvh ---
+    void AddCollider(Collider* _collider);
+    // --- Create BVH ---
+    void Generate();
+    // --- Search ---
+    SearchResult SearchBVH(const FloatRect& _targetRect);
 
-    int m_maximumDepth;
+    // --- DEBUG ---
+    Node* GetMasterNode() const;
+    void DrawBVH(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const;
+private:
+    // --- Collision (should not be here but for this demo its fine) ---
+    bool AABBCollision(const FloatRect& _boxA, const FloatRect& _boxB) const;
+
+    // --- Generate BVH function steps ---
+    // 1. Create a new node
+    void CreateNewNode(Node* currentNode, size_t currentDepth);
+    // 2. Calculate the bounds of this new node
+    FloatRect CalculateNodeBoundingBox(const std::vector<Collider*>& nodeVector) const;
+    // Finds the longest side of the bounding box
+    [[nodiscard]] inline bool IsXLongestSide(const FloatRect& boundingBox) const;
+	// Objects are moved to either childA or childB
+    void AssignObjectSide(std::vector<Collider*>& leftSide,
+	    std::vector<Collider*>& rightSide,
+	    Node* currentNode,
+	    float boundaryMidpoint);
+
+    inline void DefineNodeType(Node* _currentNode, bool _nodeIsStatic);
+
+    // --- Destroy BVH ---
+    void TraversalNodeDestroy(const Node* _currentNode);
+
+    // --- Internal search ---
+    void RecursiveSearch(const FloatRect& _searchRect, const Node* _currentNode);
+
+    // --- Dynamic BVH ---
+    void RecalculateBounds(Node* currentNode);
+private:
+    std::vector<Collider*> m_colliders;
+    // Keep track of the master node
+    Node* m_masterNode = nullptr;
+    // Collided objects with the subject
+    std::vector<Collider*> m_collidedObjectsQueue;
+
+    // Dynamic nodes that need to be updated if the objects inside the leaf nodes move
+	std::vector<Node*> m_dynamicNodeQueue;
+
+    // Parameters
+    size_t m_maximumDepth = 30;
+    size_t m_maxObjectsInLeafNode = 3;
+    // The bounding box of the node will be split into x pieces to find the best size of that box.
+    size_t m_maxSliceTests = 5;
 };
 
 #endif
