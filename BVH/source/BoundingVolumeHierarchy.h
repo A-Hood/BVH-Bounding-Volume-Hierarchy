@@ -71,7 +71,7 @@ private:
     // Parameters
     size_t m_maximumDepth = 30;
     size_t m_maxObjectsInLeafNode = 3;
-    // The bounding box of the node will be split x times to find the best size of that box.
+    // The bounding box of the node will be split into x pieces to find the best size of that box.
     size_t m_maxSliceTests = 5;
 };
 
