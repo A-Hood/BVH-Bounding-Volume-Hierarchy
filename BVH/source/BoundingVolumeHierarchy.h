@@ -33,14 +33,23 @@ private:
     bool AABBCollision(const FloatRect& _boxA, const FloatRect& _boxB) const;
 
     // --- Generate BVH function steps ---
-    void CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth);
+    // 1. Create a new node
+    void CreateNewNode(Node* currentNode, size_t currentDepth);
+    // 2. Calculate the bounds of this new node
     FloatRect CalculateNodeBoundingBox(const std::vector<Collider*>& nodeVector) const;
+    // 3. Split the node BB into x pieces to find the best area
+    float CalculateBestMidpoint(Node* _currentNode);
+    // Finds the longest side of the bounding box
     [[nodiscard]] inline bool IsXLongestSide(const FloatRect& boundingBox) const;
-	void AssignObjectSide(std::vector<Collider*>& leftSide,
+    float CalculateAreaOfBoundingBox(const FloatRect& _box) const;
+	// Objects are moved to either childA or childB
+    void AssignObjectSide(std::vector<Collider*>& leftSide,
 	    std::vector<Collider*>& rightSide,
 	    Node* currentNode,
 	    float boundaryMidpoint);
+
     inline void DefineNodeType(Node* _currentNode, bool _nodeIsStatic);
+
     // --- Destroy BVH ---
     void TraversalNodeDestroy(const Node* _currentNode);
 
@@ -60,8 +69,10 @@ private:
 	std::vector<Node*> m_dynamicNodeQueue;
 
     // Parameters
-    size_t m_maximumDepth;
+    size_t m_maximumDepth = 30;
     size_t m_maxObjectsInLeafNode = 3;
+    // The bounding box of the node will be split x times to find the best size of that box.
+    size_t m_maxSliceTests = 5;
 };
 
 #endif

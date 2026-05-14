@@ -40,7 +40,7 @@ void BVH::Generate()
 	m_masterNode = new Node();
 	m_masterNode->DefineColliders(m_colliders);
 	// Start the recursion
-	CreateNewNode(m_masterNode, 1, 500);
+	CreateNewNode(m_masterNode, 1);
 
 #if _BVHDEBUG
 	auto t2 = std::chrono::high_resolution_clock::now();
@@ -98,7 +98,7 @@ bool BVH::AABBCollision(const FloatRect& _boxA, const FloatRect& _boxB) const
 		_boxA.top + _boxA.height >= _boxB.top;
 }
 
-void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDepth)
+void BVH::CreateNewNode(Node* currentNode, size_t currentDepth)
 {
 #if _BVHDEBUG
 	// DEBUG
@@ -111,7 +111,7 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 
 	// Return if the number of game objects is m_maxObjectsInLeafNode or less
 	// And it has reached the maximum depth
-	if (currentNode->m_colliders.size() <= m_maxObjectsInLeafNode || currentDepth >= maximumDepth)
+	if (currentNode->m_colliders.size() <= m_maxObjectsInLeafNode || currentDepth >= m_maximumDepth)
 	{
 		return;
 	}
@@ -135,21 +135,12 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth, size_t maximumDe
 	leftSide.reserve(reserveSize);
 	rightSide.reserve(reserveSize);
 
-	float boundaryMidpoint;		// Can represent either on the x or the y
-	if (IsXLongestSide(boundingBox))
-	{
-		// Width is the longest side
-		boundaryMidpoint = boundingBox.left + (boundingBox.width / 2);
-		AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint);
-	}
-	else
-	{
-		// Height is the longest side
-		boundaryMidpoint = boundingBox.top + (boundingBox.height / 2);
-		AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint);
-	}
-	CreateNewNode(currentNode->childA, currentDepth + 1, maximumDepth);
-	CreateNewNode(currentNode->childB, currentDepth + 1, maximumDepth);
+	// Yeah not ideal
+	float boundaryMidpoint = CalculateBestMidpoint(currentNode);		// Can represent either on the x or the y
+	AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint);
+
+	CreateNewNode(currentNode->childA, currentDepth + 1);
+	CreateNewNode(currentNode->childB, currentDepth + 1);
 }
 
 FloatRect BVH::CalculateNodeBoundingBox(const std::vector<Collider*>& nodeVector) const
@@ -186,10 +177,86 @@ bool BVH::IsXLongestSide(const FloatRect& boundingBox) const
 	return boundingBox.width >= boundingBox.height;
 }
 
-void BVH::AssignObjectSide(std::vector<Collider*>& leftSide,
-	std::vector<Collider*>& rightSide,
-	Node* currentNode,
-	const float boundaryMidpoint)
+float BVH::CalculateBestMidpoint(Node* _currentNode)
+{
+	// Get the size of the longest size
+	FloatRect nodeBoundingBox = _currentNode->boundingBox;
+	float boundingBoxPosition;
+	float sideLength;
+	if (IsXLongestSide(nodeBoundingBox))
+	{
+		// X is longer
+		boundingBoxPosition = nodeBoundingBox.left;
+		sideLength = nodeBoundingBox.width;
+	}
+	else
+	{
+		// Y is longer
+		boundingBoxPosition = nodeBoundingBox.top;
+		sideLength = nodeBoundingBox.height;
+	}
+
+	std::vector<Collider*> leftSide;
+	std::vector<Collider*> rightSide;
+	// Reserve space to increase performance
+	size_t reserveSize = _currentNode->m_colliders.size() / 2;
+	leftSide.reserve(reserveSize);
+	rightSide.reserve(reserveSize);
+
+	float bestSliceValue = 0;
+	float lowestCost = -1;
+
+	for (size_t currentSliceIndex = 1; currentSliceIndex < m_maxSliceTests; currentSliceIndex++)
+	{
+		leftSide.clear();
+		rightSide.clear();
+		float sliceValue = boundingBoxPosition + (sideLength / static_cast<float>(m_maxSliceTests) * static_cast<float>(currentSliceIndex));
+		AssignObjectSide(leftSide, rightSide, _currentNode, sliceValue);
+
+		size_t numObjectsInLeft = leftSide.size();
+		size_t numObjectsInRight = rightSide.size();
+
+		// If the max num of slices is high, then there may be a side that has no colliders at all
+		// If any of the sides has 0 colliders, continue to next slice
+		if (numObjectsInLeft == 0 || numObjectsInRight == 0)
+		{
+			continue;
+		}
+
+
+		FloatRect leftSideBoundingBox = CalculateNodeBoundingBox(leftSide);
+		FloatRect rightSideBoundingBox = CalculateNodeBoundingBox(rightSide);
+
+		float leftSideCost = CalculateAreaOfBoundingBox(leftSideBoundingBox) * static_cast<float>(numObjectsInLeft);
+		float rightSideCost = CalculateAreaOfBoundingBox(rightSideBoundingBox) * static_cast<float>(numObjectsInRight);
+		float totalCost = leftSideCost + rightSideCost;
+
+		// Used for only the first loop
+		if (lowestCost <= -1)
+		{
+			lowestCost = totalCost;
+			bestSliceValue = sliceValue;
+		}
+		if (totalCost < lowestCost)
+		{
+			lowestCost = totalCost;
+			bestSliceValue = sliceValue;
+		}
+	}
+	// Now we know which slice is the best, we can calculate where that point is
+	return bestSliceValue;
+
+}
+
+float BVH::CalculateAreaOfBoundingBox(const FloatRect& _box) const
+{
+	return _box.width * _box.height;
+}
+
+void BVH::  AssignObjectSide(std::vector<Collider*>& leftSide,
+                           std::vector<Collider*>& rightSide,
+                           Node* currentNode,
+                           const float boundaryMidpoint)
 {
 	float objectMidpoint;
 	bool nodeIsStatic = true;
@@ -221,7 +288,6 @@ void BVH::AssignObjectSide(std::vector<Collider*>& leftSide,
 		}
 	}
 	DefineNodeType(currentNode, nodeIsStatic);
-
 }
 void BVH::DefineNodeType(Node* _currentNode, bool _nodeIsStatic)
 {
