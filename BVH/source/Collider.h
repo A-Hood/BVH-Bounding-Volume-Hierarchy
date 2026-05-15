@@ -1,11 +1,11 @@
 #ifndef COLLIDER_H
 #define COLLIDER_H
+#include <list>
 #include <SFML/Graphics.hpp>
-#include "FloatRect.h"
 
 struct Collider {
 	Collider() = default;
-	Collider(uint16_t _id, FloatRect _boundingBox, bool _isStatic = true) {
+	Collider(uint16_t _id, sf::FloatRect _boundingBox, bool _isStatic = true) {
 		id = _id;
 		boundingBox = _boundingBox;
 		isStatic = _isStatic;
@@ -22,6 +22,20 @@ struct Collider {
 #endif
 	}
 
+	std::vector<float> GetObjectCentre()
+	{
+		std::vector<float> positions;
+		// Centre X
+		positions.push_back(boundingBox.left + (boundingBox.width / 2.f));
+		// Centre Y
+		positions.push_back(boundingBox.top + (boundingBox.height / 2.f));
+		return positions;
+	}
+
+	sf::Vector2f GetObjectCenter() const
+	{
+		return {boundingBox.left + (boundingBox.width / 2.f), boundingBox.top + (boundingBox.height / 2.f)};
+	}
 	void SetPosition(sf::Vector2i position)
 	{
 		boundingBox.left = position.x;
@@ -43,7 +57,7 @@ struct Collider {
 	}
 
 	uint16_t id;
-	FloatRect boundingBox;
+	sf::FloatRect boundingBox;
 	bool isStatic = true;
 	float rotation = 0.0f;
 

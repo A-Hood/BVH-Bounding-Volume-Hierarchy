@@ -9,7 +9,6 @@
 
 #include "BoundingVolumeHierarchy.h"
 #include "Collider.h"
-#include "FloatRect.h"
 
 #define LOG(x) std::cout << x << std::endl;
 
@@ -40,10 +39,10 @@ private:
 
 	// DEBUG ------------------------------------------------------------------------
 	std::vector<Collider> colliders;
-	FloatRect birdObject = { 1000, 1000, 100, 100 };
+	sf::FloatRect birdObject = { 1000, 1000, 100, 100 };
 	sf::RectangleShape birdShape;
 	size_t currentDepth = 0;
-	size_t m_numberOfObjects = 15;
+	size_t m_numberOfObjects = 80000;
 };
 
 #endif

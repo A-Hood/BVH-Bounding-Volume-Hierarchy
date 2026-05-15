@@ -8,279 +8,158 @@
 
 BVH::BVH(size_t _maxDepth)
 {
-	m_maximumDepth = _maxDepth;
+    m_maximumDepth = _maxDepth;
 }
 
 BVH::~BVH()
 {
-	// Clean the BVH
-	m_dynamicNodeQueue.clear();
-	m_collidedObjectsQueue.clear();
-	m_colliders.clear();
-
-	TraversalNodeDestroy(m_masterNode);
+    // TODO: Clean up the memory
 }
 
-
-// --- Public functions ---------------------------------------------------------------------------------
-
-void BVH::AddCollider(Collider* _collider)
+void BVH::CreateColliderRef(std::vector<Collider>& _colliderVecRef)
 {
-	m_colliders.push_back(_collider);
+    m_colliders = _colliderVecRef;
 }
 
-// Should be changed to not require colliders as parameters
-void BVH::Generate()
+void BVH::GenerateBVH()
 {
-#if _BVHDEBUG
-	auto t1 = std::chrono::high_resolution_clock::now();
-#endif
+    // Create master node - Master node is the first node in the vector
+    Node masterNode;
+    masterNode.objectIndex = 0;
+    masterNode.objectCount = m_colliders.size();
 
-	// Creates the master node
-	m_masterNode = new Node();
-	m_masterNode->DefineColliders(m_colliders);
-	// Start the recursion
-	CreateNewNode(m_masterNode, 1);
+    InitialiseNodeBoundingBox(masterNode);
+    // Find the size of the master node
+    for (auto index = masterNode.objectIndex; index < masterNode.objectIndex + masterNode.objectCount; index++)
+    {
+        GrowBoundingBox(masterNode, m_colliders[index]);
+    }
 
-#if _BVHDEBUG
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	std::cout << "Time to create BVH: " << std::to_string(time.count()) << "ms\n";
-#endif
+    // Move into the vector
+    m_nodeVec.emplace_back(masterNode);
+
+    CreateNewNode(masterNode, 0);
 }
 
-SearchResult BVH::SearchBVH(const FloatRect& _targetRect) {
-	m_collidedObjectsQueue.clear();
-
-    // Traverse through the bvh, then check objects within that node
-    auto t1 = std::chrono::high_resolution_clock::now();
-    RecursiveSearch(_targetRect, m_masterNode); // start search at master node
-    auto t2 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float, std::milli> bvhSearch = t2 - t1;
-
-	// Set result of search
-	SearchResult result;
-	result.searchTime = bvhSearch.count();
-	result.numberCollidedObjects = m_collidedObjectsQueue.size();
-
-	return result;
-}
-
-// DEBUG ONLY
-Node* BVH::GetMasterNode() const
+void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
 {
-	return m_masterNode;
+    for (Node& currentNode : m_nodeVec)
+    {
+        if (currentNode.currentDepth != _currentDepth)
+        {
+            continue;
+        }
+        sf::RectangleShape debugRect;
+        debugRect.setPosition(currentNode.boundingBox.left, currentNode.boundingBox.top);
+        debugRect.setSize({currentNode.boundingBox.width, currentNode.boundingBox.height});
+        debugRect.setOutlineColor(sf::Color::Red);
+        debugRect.setOutlineThickness(3);
+        debugRect.setFillColor(sf::Color(0, 0, 0, 0));
+
+        _target.draw(debugRect);
+    }
 }
 
-void BVH::DrawBVH(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const
+void BVH::InitialiseNodeBoundingBox(Node& _currentNode) const
 {
-	_target.draw(_currentNode->bbVisual);
-	_currentNode->ChangeVisibility(_currentDepth);
-
-	if (_currentNode->childA != nullptr)
-	{
-		DrawBVH(_target, _currentNode->childA, _currentDepth);
-	}
-	if (_currentNode->childB != nullptr)
-	{
-		DrawBVH(_target, _currentNode->childB, _currentDepth);
-	}
+    _currentNode.boundingBox.left = m_colliders[_currentNode.objectIndex].boundingBox.left;
+    _currentNode.boundingBox.top = m_colliders[_currentNode.objectIndex].boundingBox.top;
+    _currentNode.boundingBox.width = m_colliders[_currentNode.objectIndex].boundingBox.width;
+    _currentNode.boundingBox.height = m_colliders[_currentNode.objectIndex].boundingBox.height;
 }
 
-
-// --- Private functions ---------------------------------------------------------------------------------
-
-bool BVH::AABBCollision(const FloatRect& _boxA, const FloatRect& _boxB) const
+void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
 {
-	return _boxA.left <= _boxB.left + _boxB.width &&
-		_boxA.top <= _boxB.top + _boxB.height &&
-		_boxA.left + _boxA.width >= _boxB.left &&
-		_boxA.top + _boxA.height >= _boxB.top;
+    LOG(_currentDepth)
+    _currentNode.currentDepth = _currentDepth;
+    if (_currentNode.objectCount <= m_maxObjectsInLeafNode || _currentDepth >= m_maximumDepth)
+    {
+        // Do not continue as we have hit the max size
+        return;
+    }
+    // Split the current node bounding box
+    sf::Vector2f result = ChooseSplit(_currentNode);
+    int splitAxis = static_cast<int>(result.x);
+    float splitPosition = result.y;
+
+    // Store where the starting position of the children are
+    // This will technically be the index just after the parent index
+    _currentNode.childIndex = m_nodeVec.size();
+    //size_t parentIndex = m_nodeVec.size() - 1;
+
+    // Create child nodes
+    Node childA;
+    childA.objectIndex = _currentNode.objectIndex;
+    InitialiseNodeBoundingBox(childA);
+    Node childB;
+    childB.objectIndex = _currentNode.objectIndex;
+    InitialiseNodeBoundingBox(childB);
+
+    m_nodeVec.emplace_back(childA);
+    m_nodeVec.emplace_back(childB);
+
+    for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
+    {
+        bool isSideA = m_colliders[index].GetObjectCentre()[splitAxis] < splitPosition;
+        Node& currentChild = isSideA ? childA : childB;
+        // Changes the size of the bounding box of the child node using the current collider
+        GrowBoundingBox(currentChild, m_colliders[index]);
+        currentChild.objectCount++;
+
+        if (isSideA)
+        {
+            uint32_t swap = currentChild.objectIndex + currentChild.objectCount - 1;
+            std::swap(m_colliders[index], m_colliders[swap]);
+            childB.objectIndex++;
+        }
+    }
+
+    CreateNewNode(childA, _currentDepth + 1);
+    CreateNewNode(childB, _currentDepth + 1);
 }
 
-void BVH::CreateNewNode(Node* currentNode, size_t currentDepth)
+sf::Vector2f BVH::ChooseSplit(Node& _currentNode)
 {
-#if _BVHDEBUG
-	// DEBUG
-	currentNode->DefineDepth(currentDepth);
-#endif
-
-	// Calculate the bounding box
-	FloatRect boundingBox = CalculateNodeBoundingBox(currentNode->m_colliders);
-	currentNode->DefineBounds(boundingBox);
-
-	// Return if the number of game objects is m_maxObjectsInLeafNode or less
-	// And it has reached the maximum depth
-	if (currentNode->m_colliders.size() <= m_maxObjectsInLeafNode || currentDepth >= m_maximumDepth)
-	{
-		return;
-	}
-
-	// Create child nodes
-	Node* childA = new Node();
-	currentNode->DefineChildA(childA);
-
-	Node* childB = new Node();
-	currentNode->DefineChildB(childB);
-
-	// Define parents
-	currentNode->childA->DefineParentNode(currentNode);
-	currentNode->childB->DefineParentNode(currentNode);
-
-	// Get the vectors from each child node
-	auto& leftSide = currentNode->childA->GetCollders();
-	auto& rightSide = currentNode->childB->GetCollders();
-	// Reserve space to increase performance
-	size_t reserveSize = currentNode->m_colliders.size() / 2;
-	leftSide.reserve(reserveSize);
-	rightSide.reserve(reserveSize);
-
-	// Yeah not ideal
-	float boundaryMidpoint;		// Can represent either on the x or the y
-	if (IsXLongestSide(boundingBox))
-	{
-		boundaryMidpoint = boundingBox.left + (boundingBox.width / 2);
-	}
-	else
-	{
-		boundaryMidpoint = boundingBox.top + (boundingBox.height / 2);
-	}
-	AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint);
-
-	CreateNewNode(currentNode->childA, currentDepth + 1);
-	CreateNewNode(currentNode->childB, currentDepth + 1);
+    // X returns the splitAxis
+    // Y returns the splitPosition
+    if (IsXLongestSide(_currentNode))
+    {
+        // X is the longest
+        return {0, _currentNode.boundingBox.left + (_currentNode.boundingBox.width / 2.f)};
+    }
+    return {1, _currentNode.boundingBox.top + (_currentNode.boundingBox.height / 2.f)};
 }
 
-FloatRect BVH::CalculateNodeBoundingBox(const std::vector<Collider*>& nodeVector) const
+sf::FloatRect BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
 {
-	// Finds the smallest X and Y in the list of colliders
-	// Also finds the largest X and Y in the list of colliders
-	// Returns the position of the X and Y as well as the width and height of the bounding box
+    // Left
+    if (_currentNode.boundingBox.left > _collider.boundingBox.left)
+    {
+        // Update the width
+        _currentNode.boundingBox.width += (_currentNode.boundingBox.left - _collider.boundingBox.left);
+        // Update the node BB left
+        _currentNode.boundingBox.left = _collider.boundingBox.left;
+    }
+    // Top
+    if (_currentNode.boundingBox.top > _collider.boundingBox.top)
+    {
+        // Update the width
+        _currentNode.boundingBox.height += (_currentNode.boundingBox.top - _collider.boundingBox.top);
+        // Update the node BB left
+        _currentNode.boundingBox.top = _collider.boundingBox.top;
+    }
 
-	// Fill in the values of the back object in the current node
-	float smallestX = nodeVector.back()->boundingBox.left;
-	float largestX = nodeVector.back()->boundingBox.left + nodeVector.back()->boundingBox.width;
+    // Width
+    const float width = (_collider.boundingBox.left + _collider.boundingBox.width) - _currentNode.boundingBox.left;
+    _currentNode.boundingBox.width = std::max(_currentNode.boundingBox.width, width);
+    // Height
+    const float height = (_collider.boundingBox.top + _collider.boundingBox.height) - _currentNode.boundingBox.top;
+    _currentNode.boundingBox.height = std::max(_currentNode.boundingBox.height, height);
 
-	float smallestY = nodeVector.back()->boundingBox.top;
-	float largestY = nodeVector.back()->boundingBox.top + nodeVector.back()->boundingBox.height;
-
-	// Find smallest and largest X and Y values
-	for (const auto object : nodeVector) {
-		// Smallest X
-		smallestX = std::min(object->boundingBox.left, smallestX);
-		// Largest X
-		largestX = std::max(object->boundingBox.left + object->boundingBox.width, largestX);
-		// Smallest Y
-		smallestY = std::min(object->boundingBox.top, smallestY);
-		// Largest Y
-		largestY = std::max(object->boundingBox.top + object->boundingBox.height, largestY);
-	}
-	return { smallestX, smallestY, largestX - smallestX, largestY - smallestY };
+    return _currentNode.boundingBox;
 }
 
-bool BVH::IsXLongestSide(const FloatRect& boundingBox) const
+bool BVH::IsXLongestSide(const Node& _currentNode) const
 {
-	// True: X is the longest side
-	// False: Y is the longest side
-	return boundingBox.width >= boundingBox.height;
-}
-
-void BVH::  AssignObjectSide(std::vector<Collider*>& leftSide,
-                           std::vector<Collider*>& rightSide,
-                           Node* currentNode,
-                           const float boundaryMidpoint)
-{
-	float objectMidpoint;
-	bool nodeIsStatic = true;
-
-	for (const auto object : currentNode->m_colliders)
-	{
-		// If any object is dynamic, then the node is a dynamic node
-		if (!object->isStatic)
-		{
-			nodeIsStatic = false;
-		}
-		// Calculate the midpoint of the object
-		if (IsXLongestSide(currentNode->boundingBox))
-		{
-			objectMidpoint = object->boundingBox.left + (object->boundingBox.width / 2);
-		}
-		else
-		{
-			objectMidpoint = object->boundingBox.top + (object->boundingBox.height / 2);
-		}
-
-		if (objectMidpoint < boundaryMidpoint) {
-			// Object is moved to the left side
-			leftSide.emplace_back(object);
-		}
-		else {
-			// Object is moved to the right side
-			rightSide.emplace_back(object);
-		}
-	}
-	DefineNodeType(currentNode, nodeIsStatic);
-}
-void BVH::DefineNodeType(Node* _currentNode, bool _nodeIsStatic)
-{
-	// Assigns the node type
-	// Static node -> Does not need to be updated as objects do not move
-	// Dynamic node -> Needs to be updated when objects move
-	if (_nodeIsStatic)
-	{
-		return;
-	}
-	m_dynamicNodeQueue.emplace_back(_currentNode);
-}
-
-void BVH::TraversalNodeDestroy(const Node* _currentNode)
-{
-	if (_currentNode->childA != nullptr)
-	{
-		TraversalNodeDestroy(_currentNode->childA);
-	}
-	if (_currentNode->childB != nullptr)
-	{
-		TraversalNodeDestroy(_currentNode->childB);
-	}
-	// We are at a leaf node
-	delete _currentNode;
-}
-
-void BVH::RecursiveSearch(const FloatRect& _searchRect, const Node* _currentNode) {
-	// If the searchRect is not within this current node, do not proceed
-	if (!AABBCollision(_searchRect, _currentNode->boundingBox))
-	{
-		return;
-	}
-	// If the child nodes are a nullptr, therefore this is the leaf node.
-	// Check objects within the leaf node
-	// Else if this is not a leaf node, recurse
-	if (_currentNode->childA != nullptr)
-	{
-		RecursiveSearch(_searchRect, _currentNode->childA);
-	}
-	if (_currentNode->childB != nullptr)
-	{
-		RecursiveSearch(_searchRect, _currentNode->childB);
-		return;
-	}
-	// If this is not a nullptr, the searchRect is within this node, then write it down
-	// Check collisions with object inside of node
-	for (const auto collider : _currentNode->m_colliders)
-	{
-		if (AABBCollision(_searchRect, collider->boundingBox))
-		{
-			m_collidedObjectsQueue.emplace_back(collider);
-		}
-	}
-}
-void BVH::RecalculateBounds(Node* currentNode) {
-	FloatRect boundingBox = CalculateNodeBoundingBox(currentNode->m_colliders);
-	currentNode->DefineBounds(boundingBox);
-
-	if (currentNode->previousNode != nullptr)
-	{
-		RecalculateBounds(currentNode->previousNode);
-	}
+    return _currentNode.boundingBox.width > _currentNode.boundingBox.height;
 }

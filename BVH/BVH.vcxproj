@@ -145,7 +145,6 @@
     <ClInclude Include="source\Application.h" />
     <ClInclude Include="source\BoundingVolumeHierarchy.h" />
     <ClInclude Include="source\Collider.h" />
-    <ClInclude Include="source\FloatRect.h" />
     <ClInclude Include="source\Node.h" />
     <ClInclude Include="source\Random.h" />
   </ItemGroup>
