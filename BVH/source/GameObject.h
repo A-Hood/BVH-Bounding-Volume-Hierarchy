@@ -1,5 +1,5 @@
 #pragma once
-#include "Collider.h"
+#include "Physics/Colliders/Collider.h"
 
 class GameObject : public BoxCollider
 {
@@ -9,10 +9,8 @@ public:
     {
         BoxCollider::SetPosition(position);
         BoxCollider::SetSize(size);
-        BoxCollider::SetOrigin({ size.x / 2.f, size.y / 2.f });
+        BoxCollider::Create();
         //BoxCollider::SetOrigin({0, 0});
-        BoxCollider::SetVertexCount(vertexCount);
-        BoxCollider::CreateCollider();
     }
     GameObject() : BoxCollider({ 0.0f, 0.0f }, { 0.0f, 0.0f }) {}
     ~GameObject() override = default;

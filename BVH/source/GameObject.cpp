@@ -2,7 +2,7 @@
 
 void GameObject::Update()
 {
-    BoxCollider::UpdateCollider();
+    BoxCollider::Update();
 }
 
 void GameObject::SetObjectStatic()

@@ -138,7 +138,7 @@
   <ItemGroup>
     <ClCompile Include="source\Application.cpp" />
     <ClCompile Include="source\BoundingVolumeHierarchy.cpp" />
-    <ClCompile Include="source\Collider.cpp" />
+    <ClCompile Include="source\Physics\Colliders\Collider.cpp" />
     <ClCompile Include="source\GameObject.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\Node.cpp" />
@@ -146,9 +146,10 @@
   <ItemGroup>
     <ClInclude Include="source\Application.h" />
     <ClInclude Include="source\BoundingVolumeHierarchy.h" />
-    <ClInclude Include="source\Collider.h" />
+    <ClInclude Include="source\Physics\Colliders\Collider.h" />
     <ClInclude Include="source\GameObject.h" />
     <ClInclude Include="source\Node.h" />
+    <ClInclude Include="source\Physics\Colliders\ColliderVisual.h" />
     <ClInclude Include="source\Physics\SATCollision.h" />
     <ClInclude Include="source\Random.h" />
   </ItemGroup>

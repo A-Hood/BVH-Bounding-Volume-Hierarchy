@@ -1,7 +1,7 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "Collider.h"
+#include "Physics/Colliders/Collider.h"
 #include "GameObject.h"
 
 class Node : public BoxCollider {

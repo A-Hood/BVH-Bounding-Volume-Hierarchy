@@ -6,7 +6,7 @@
 
 Application::Application() : m_bvh()
 {
-	birdObject.SetVertexCount(4);
+	//birdObject.SetVertexCount(4);
 }
 
 void Application::CreateApplication() {
@@ -40,7 +40,7 @@ void Application::CreateApplication() {
 
 		std::vector<sf::Vector2f> vecs = { newPos1, newPos2, newPos3, newPos4 };
 		m_objects.emplace_back(vecs);
-		m_objects.at(x).CreateCollider();
+		m_objects.at(x).Create();
 	}
 
 	// Create 
@@ -51,7 +51,7 @@ void Application::CreateApplication() {
 	sf::Vector2f newPos4 = sf::Vector2f{ 0.0f, 0.0f } + sf::Vector2f{ 0.0f, size };
 	std::vector<sf::Vector2f> vecs = { newPos1, newPos2, newPos3, newPos4 };
 	m_testCollider = PolygonCollider(vecs);
-	m_testCollider.CreateCollider();
+	m_testCollider.Create();
 }
 
 void Application::Run() {
@@ -72,7 +72,7 @@ void Application::Run() {
 
 void Application::Update() {
 	float moveSpeed = 3.0f;
-	float rotationSpeed = 3.0f;
+	float rotationSpeed = 0.05f;
 	// Movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
 		m_testCollider.IncrementPosition({ 0, -moveSpeed });
@@ -93,11 +93,14 @@ void Application::Update() {
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
 		m_testCollider.IncrementRotation(rotationSpeed);
 	}
-	
+
 	// draw each poly collider
-	for (const auto& col : m_objects) {
-	    m_window.draw(col);
+#if SHOW_COLLIDER_VISUALS == 1
+	for (auto& col : m_objects) {
+		col.Update();
+		col.Render(m_window);
 	}
+#endif
 
 	// Run test collision
 	for (auto& col : m_objects) {
@@ -109,7 +112,10 @@ void Application::Update() {
 		m_testCollider.ChangeColour(sf::Color::White);
 	}
 
-	m_window.draw(m_testCollider);
+#if SHOW_COLLIDER_VISUALS == 1
+	m_testCollider.Update();
+	m_testCollider.Render(m_window);
+#endif
 }
 
 void Application::Close() {

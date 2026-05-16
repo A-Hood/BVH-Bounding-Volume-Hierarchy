@@ -1,7 +1,7 @@
 #ifndef SAT_H
 #define SAT_H
 
-#include "../Collider.h"
+#include "Colliders/Collider.h"
 
 /// <summary>
 /// 
