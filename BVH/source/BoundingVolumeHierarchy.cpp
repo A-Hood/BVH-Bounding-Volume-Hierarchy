@@ -16,9 +16,10 @@ BVH::~BVH()
     // TODO: Clean up the memory
 }
 
-void BVH::CreateColliderRef(std::vector<Collider>& _colliderVecRef)
+void BVH::CreateColliderRef(const std::vector<Collider>& _colliderVecRef)
 {
     m_colliders = _colliderVecRef;
+    m_nodeVec.reserve((2 * m_colliders.size()) - 1);
 }
 
 void BVH::GenerateBVH()
@@ -43,8 +44,8 @@ void BVH::GenerateBVH()
     CreateNewNode(masterNode, 0);
 
     auto t2 = std::chrono::system_clock::now();
-    std::chrono::duration<float> duration = t2 - t1;
-    LOG("Time to create in ms: " + std::to_string(duration.count() * 1000));
+    std::chrono::duration<float, std::milli> time = t2 - t1;
+    LOG("Time to create in ms: " + std::to_string(time.count()));
 
 }
 
@@ -122,7 +123,7 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
     CreateNewNode(childB, _currentDepth);
 }
 
-sf::Vector2f BVH::ChooseSplit(Node& _currentNode)
+sf::Vector2f BVH::ChooseSplit(const Node& _currentNode) const
 {
     // X returns the splitAxis
     // Y returns the splitPosition
@@ -134,7 +135,7 @@ sf::Vector2f BVH::ChooseSplit(Node& _currentNode)
     return {1, _currentNode.boundingBox.top + (_currentNode.boundingBox.height / 2.f)};
 }
 
-void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
+void BVH::GrowBoundingBox(Node& _currentNode, const Collider& _collider) const
 {
     if (_currentNode.boundingBox.width <= 0 || _currentNode.boundingBox.height <= 0)
     {
@@ -176,8 +177,6 @@ void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
     // Height
     const float height = (_collider.boundingBox.top + _collider.boundingBox.height) - _currentNode.boundingBox.top;
     _currentNode.boundingBox.height = std::max(_currentNode.boundingBox.height, height);
-
-    return;
 }
 
 bool BVH::IsXLongestSide(const Node& _currentNode) const

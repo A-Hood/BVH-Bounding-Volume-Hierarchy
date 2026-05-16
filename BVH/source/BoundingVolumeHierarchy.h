@@ -23,7 +23,7 @@ public:
     ~BVH();
 public:
     // --- Get reference to the colliders ---
-    void CreateColliderRef(std::vector<Collider>& _colliderVecRef);
+    void CreateColliderRef(const std::vector<Collider>& _colliderVecRef);
     // --- Create BVH ---
     void GenerateBVH();
     // --- Search ---
@@ -40,9 +40,9 @@ private:
     // 1. Create a new node
     void CreateNewNode(Node& _currentNode, size_t _currentDepth);
     // 2. Create the split
-    sf::Vector2f ChooseSplit(Node& _currentNode);
+    sf::Vector2f ChooseSplit(const Node& _currentNode) const;
     // 2. Calculate the bounds of this new node
-    void GrowBoundingBox(Node& _currentNode, Collider& _collider);
+    void GrowBoundingBox(Node& _currentNode, const Collider& _collider) const;
     // Finds the longest side of the bounding box
     [[nodiscard]] inline bool IsXLongestSide(const Node& _currentNode) const;
 
