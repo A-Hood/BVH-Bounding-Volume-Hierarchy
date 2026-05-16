@@ -9,22 +9,22 @@ void Application::CreateApplication() {
 	m_window.setFramerateLimit(60);
 
 	// Generate random colliders (DEBUG)
-	//for (size_t x = 0; x < m_numberOfObjects; x++)
-	//{
-	//	int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
-	//	int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
-	//
-	//	colliders.emplace_back(x, FloatRect(randomX, randomY, 64, 64), false);
-	//}
+	for (size_t x = 0; x < m_numberOfObjects; x++)
+	{
+		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
+		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
+
+		colliders.emplace_back(x, sf::FloatRect(randomX, randomY, 64, 64), false);
+	}
 
 	// Great example of how using SAH is more efficient than slicing the longest node axis
-	colliders.emplace_back(0, sf::FloatRect(1584, 416, 64, 64));
-	colliders.emplace_back(1, sf::FloatRect(104, 719, 64, 64));
-	colliders.emplace_back(2, sf::FloatRect(412, 311, 64, 64));
-	colliders.emplace_back(3, sf::FloatRect(1698, 332, 64, 64));
-	colliders.emplace_back(4, sf::FloatRect(1808, 739, 64, 64));
-	colliders.emplace_back(5, sf::FloatRect(252, 179, 64, 64));
-	colliders.emplace_back(6, sf::FloatRect(825, 420, 64, 64));
+	//colliders.emplace_back(0, sf::FloatRect(1584, 416, 64, 64));
+	//colliders.emplace_back(1, sf::FloatRect(104, 719, 64, 64));
+	//colliders.emplace_back(2, sf::FloatRect(412, 311, 64, 64));
+	//colliders.emplace_back(3, sf::FloatRect(1698, 332, 64, 64));
+	//colliders.emplace_back(4, sf::FloatRect(1808, 739, 64, 64));
+	//colliders.emplace_back(5, sf::FloatRect(252, 179, 64, 64));
+	//colliders.emplace_back(6, sf::FloatRect(825, 420, 64, 64));
 
 	// Set-up BVH
 	m_bvh.CreateColliderRef(colliders);

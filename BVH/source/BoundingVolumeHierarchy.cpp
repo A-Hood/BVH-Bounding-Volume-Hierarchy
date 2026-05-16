@@ -23,6 +23,7 @@ void BVH::CreateColliderRef(std::vector<Collider>& _colliderVecRef)
 
 void BVH::GenerateBVH()
 {
+    auto t1 = std::chrono::system_clock::now();
     // Create master node - Master node is the first node in the vector
     Node masterNode;
     masterNode.objectIndex = 0;
@@ -36,9 +37,15 @@ void BVH::GenerateBVH()
     }
 
     // Move into the vector
+    m_nodeVec.reserve(8);
     m_nodeVec.emplace_back(masterNode);
 
     CreateNewNode(masterNode, 0);
+
+    auto t2 = std::chrono::system_clock::now();
+    std::chrono::duration<float> duration = t2 - t1;
+    LOG("Time to create in ms: " + std::to_string(duration.count() * 1000));
+
 }
 
 void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
@@ -64,14 +71,11 @@ void BVH::InitialiseNodeBoundingBox(Node& _currentNode) const
 {
     _currentNode.boundingBox.left = m_colliders[_currentNode.objectIndex].boundingBox.left;
     _currentNode.boundingBox.top = m_colliders[_currentNode.objectIndex].boundingBox.top;
-    _currentNode.boundingBox.width = m_colliders[_currentNode.objectIndex].boundingBox.width;
-    _currentNode.boundingBox.height = m_colliders[_currentNode.objectIndex].boundingBox.height;
 }
 
 void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
 {
-    LOG(_currentDepth)
-    _currentNode.currentDepth = _currentDepth;
+    _currentDepth++;
     if (_currentNode.objectCount <= m_maxObjectsInLeafNode || _currentDepth >= m_maximumDepth)
     {
         // Do not continue as we have hit the max size
@@ -90,13 +94,11 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
     // Create child nodes
     Node childA;
     childA.objectIndex = _currentNode.objectIndex;
-    InitialiseNodeBoundingBox(childA);
+    childA.currentDepth = _currentDepth;
+
     Node childB;
     childB.objectIndex = _currentNode.objectIndex;
-    InitialiseNodeBoundingBox(childB);
-
-    m_nodeVec.emplace_back(childA);
-    m_nodeVec.emplace_back(childB);
+    childB.currentDepth = _currentDepth;
 
     for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
@@ -113,9 +115,11 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
             childB.objectIndex++;
         }
     }
+    m_nodeVec.emplace_back(childA);
+    m_nodeVec.emplace_back(childB);
 
-    CreateNewNode(childA, _currentDepth + 1);
-    CreateNewNode(childB, _currentDepth + 1);
+    CreateNewNode(childA, _currentDepth);
+    CreateNewNode(childB, _currentDepth);
 }
 
 sf::Vector2f BVH::ChooseSplit(Node& _currentNode)
@@ -130,21 +134,38 @@ sf::Vector2f BVH::ChooseSplit(Node& _currentNode)
     return {1, _currentNode.boundingBox.top + (_currentNode.boundingBox.height / 2.f)};
 }
 
-sf::FloatRect BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
+void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
 {
+    if (_currentNode.boundingBox.width <= 0 || _currentNode.boundingBox.height <= 0)
+    {
+        // We know this node is new.
+        // Therefore, we must set the position and size to the current collider
+        // Return after
+        _currentNode.boundingBox.left = _collider.boundingBox.left;
+        _currentNode.boundingBox.top = _collider.boundingBox.top;
+        _currentNode.boundingBox.width = _collider.boundingBox.width;
+        _currentNode.boundingBox.height = _collider.boundingBox.height;
+        return;
+    }
     // Left
     if (_currentNode.boundingBox.left > _collider.boundingBox.left)
     {
         // Update the width
-        _currentNode.boundingBox.width += (_currentNode.boundingBox.left - _collider.boundingBox.left);
+        if (_currentNode.boundingBox.width > 0)
+        {
+            _currentNode.boundingBox.width += (_currentNode.boundingBox.left - _collider.boundingBox.left);
+        }
         // Update the node BB left
         _currentNode.boundingBox.left = _collider.boundingBox.left;
     }
     // Top
     if (_currentNode.boundingBox.top > _collider.boundingBox.top)
     {
-        // Update the width
-        _currentNode.boundingBox.height += (_currentNode.boundingBox.top - _collider.boundingBox.top);
+        // Update the height
+        if (_currentNode.boundingBox.height > 0)
+        {
+            _currentNode.boundingBox.height += (_currentNode.boundingBox.top - _collider.boundingBox.top);
+        }
         // Update the node BB left
         _currentNode.boundingBox.top = _collider.boundingBox.top;
     }
@@ -156,7 +177,7 @@ sf::FloatRect BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
     const float height = (_collider.boundingBox.top + _collider.boundingBox.height) - _currentNode.boundingBox.top;
     _currentNode.boundingBox.height = std::max(_currentNode.boundingBox.height, height);
 
-    return _currentNode.boundingBox;
+    return;
 }
 
 bool BVH::IsXLongestSide(const Node& _currentNode) const

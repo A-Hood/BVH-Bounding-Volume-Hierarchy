@@ -42,7 +42,7 @@ private:
     // 2. Create the split
     sf::Vector2f ChooseSplit(Node& _currentNode);
     // 2. Calculate the bounds of this new node
-    sf::FloatRect GrowBoundingBox(Node& _currentNode, Collider& _collider);
+    void GrowBoundingBox(Node& _currentNode, Collider& _collider);
     // Finds the longest side of the bounding box
     [[nodiscard]] inline bool IsXLongestSide(const Node& _currentNode) const;
 
@@ -71,7 +71,7 @@ private:
 	std::vector<Node*> m_dynamicNodeQueue;
 
     // Parameters
-    size_t m_maximumDepth = 1;
+    size_t m_maximumDepth = 30;
     size_t m_maxObjectsInLeafNode = 3;
 };
 
