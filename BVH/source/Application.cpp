@@ -28,9 +28,7 @@ void Application::CreateApplication() {
 
 	// Set-up BVH
 	m_bvh.CreateColliderRef(colliders);
-	LOG("Creating BVH...")
 	m_bvh.GenerateBVH();
-	LOG("Finished creating BVH")
 }
 
 void Application::Run() {
