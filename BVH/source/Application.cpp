@@ -32,12 +32,6 @@ void Application::CreateApplication() {
 		sf::Vector2f newPos3 = sf::Vector2f{ static_cast<float>(randomX), static_cast<float>(randomY) } + sf::Vector2f{ size, size };
 		sf::Vector2f newPos4 = sf::Vector2f{ static_cast<float>(randomX), static_cast<float>(randomY) } + sf::Vector2f{ 0.0f, size };
 
-        // DEBUG Colour
-		//newVert1.color = sf::Color(rR, rG, rB);
-		//newVert2.color = sf::Color(rR, rG, rB);
-		//newVert3.color = sf::Color(rR, rG, rB);
-		//newVert4.color = sf::Color(rR, rG, rB);
-
 		std::vector<sf::Vector2f> vecs = { newPos1, newPos2, newPos3, newPos4 };
 		m_objects.emplace_back(vecs);
 		m_objects.at(x).Create();

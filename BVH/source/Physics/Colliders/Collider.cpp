@@ -109,11 +109,41 @@ float PolygonCollider::GetRotation() const {
 // ---------------------------------------------------------------------------------------
 
 
+
 // --------------------------------------------------------------------------------------- BOX (POLYGON)
+// Creates 4 vertices, set to a real value before usage
+BoxCollider::BoxCollider() {
+    // Local vertices
+    m_verticesLocal.emplace_back(0.0f, 0.0f);
+    m_verticesLocal.emplace_back(0.0f, 0.0f);
+    m_verticesLocal.emplace_back(0.0f, 0.0f);
+    m_verticesLocal.emplace_back(0.0f, 0.0f);
+
+    // Global vertices
+    m_verticesGlobal = m_verticesLocal;
+}
+
+// Box declared with a size and position
+BoxCollider::BoxCollider(const sf::Vector2f& _pos, const sf::Vector2f& _size) : m_size(_size) {
+    // Local vertices
+    m_verticesLocal.emplace_back(0.0f, 0.0f);
+    m_verticesLocal.emplace_back(_size.x, 0.0f);
+    m_verticesLocal.emplace_back(_size.x, _size.y);
+    m_verticesLocal.emplace_back(0.0f, _size.y);
+
+    // Global vertices
+    m_verticesGlobal.emplace_back(_pos.x, _pos.y); // Top-Left
+    m_verticesGlobal.emplace_back(_pos.x + _size.x, _pos.y); // Top-Right
+    m_verticesGlobal.emplace_back(_pos.x + _size.x, _pos.y + _size.y); // Bottom-Right
+    m_verticesGlobal.emplace_back(_pos.x, _pos.y + _size.y); // Bottom-Left
+}
+
+
 void BoxCollider::SetSize(sf::Vector2f _size) {
-    /*
     m_size = _size;
 
+    // Missing implementation of increasing the size of the box.
+    /*
     for (auto& vert : m_verticesGlobal) {
         vert 
     }
