@@ -83,9 +83,9 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
         return;
     }
     // Split the current node bounding box
-    sf::Vector2f result = ChooseSplit(_currentNode);
-    int splitAxis = static_cast<int>(result.x);
-    float splitPosition = result.y;
+    sf::Vector2i result = ChooseSplit(_currentNode);
+    const int splitAxis = result.x;
+    const int splitPosition = result.y;
 
     // Store where the starting position of the children are
     // This will technically be the index just after the parent index
@@ -103,7 +103,7 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
 
     for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
-        bool isSideA = m_colliders[index].GetObjectCentre()[splitAxis] < splitPosition;
+        const bool isSideA = m_colliders[index].GetObjectCentreFromAxis(splitAxis) < splitPosition;
         Node& currentChild = isSideA ? childA : childB;
         // Changes the size of the bounding box of the child node using the current collider
         GrowBoundingBox(currentChild, m_colliders[index]);
@@ -111,7 +111,7 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
 
         if (isSideA)
         {
-            uint32_t swap = currentChild.objectIndex + currentChild.objectCount - 1;
+            const uint32_t swap = currentChild.objectIndex + currentChild.objectCount - 1;
             std::swap(m_colliders[index], m_colliders[swap]);
             childB.objectIndex++;
         }
@@ -123,16 +123,16 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
     CreateNewNode(childB, _currentDepth);
 }
 
-sf::Vector2f BVH::ChooseSplit(const Node& _currentNode) const
+sf::Vector2i BVH::ChooseSplit(const Node& _currentNode) const
 {
     // X returns the splitAxis
     // Y returns the splitPosition
     if (IsXLongestSide(_currentNode))
     {
         // X is the longest
-        return {0, _currentNode.boundingBox.left + (_currentNode.boundingBox.width / 2.f)};
+        return {0, static_cast<int>(_currentNode.boundingBox.left) + (static_cast<int>(_currentNode.boundingBox.width) / 2)};
     }
-    return {1, _currentNode.boundingBox.top + (_currentNode.boundingBox.height / 2.f)};
+    return {0, static_cast<int>(_currentNode.boundingBox.top) + (static_cast<int>(_currentNode.boundingBox.height) / 2)};
 }
 
 void BVH::GrowBoundingBox(Node& _currentNode, const Collider& _collider) const

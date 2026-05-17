@@ -40,7 +40,7 @@ private:
     // 1. Create a new node
     void CreateNewNode(Node& _currentNode, size_t _currentDepth);
     // 2. Create the split
-    sf::Vector2f ChooseSplit(const Node& _currentNode) const;
+    inline sf::Vector2i ChooseSplit(const Node& _currentNode) const;
     // 2. Calculate the bounds of this new node
     void GrowBoundingBox(Node& _currentNode, const Collider& _collider) const;
     // Finds the longest side of the bounding box

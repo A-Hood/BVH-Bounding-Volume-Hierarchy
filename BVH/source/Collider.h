@@ -1,5 +1,6 @@
 #ifndef COLLIDER_H
 #define COLLIDER_H
+#include <cassert>
 #include <list>
 #include <SFML/Graphics.hpp>
 
@@ -22,17 +23,23 @@ struct Collider {
 #endif
 	}
 
-	std::vector<float> GetObjectCentre()
+	int GetObjectCentreFromAxis(const int axis) const
 	{
-		std::vector<float> positions;
-		// Centre X
-		positions.push_back(boundingBox.left + (boundingBox.width / 2.f));
-		// Centre Y
-		positions.push_back(boundingBox.top + (boundingBox.height / 2.f));
-		return positions;
+		// 0 -> X
+		// 1 -> Y
+		switch (axis)
+		{
+		case 0:
+			return static_cast<int>(boundingBox.left) + static_cast<int>(boundingBox.width / 2.f);
+		case 1:
+			return static_cast<int>(boundingBox.top) + static_cast<int>(boundingBox.height / 2.f);
+		default:
+			assert(axis < 1, "Invalid axis");
+			return 0;
+		}
 	}
 
-	sf::Vector2f GetObjectCenter() const
+	std::vector<float> GetObjectCentre() const
 	{
 		return {boundingBox.left + (boundingBox.width / 2.f), boundingBox.top + (boundingBox.height / 2.f)};
 	}
