@@ -84,14 +84,7 @@ sf::Vector2f PolygonCollider::GetPosition() const {
 
 // Rotation
 void PolygonCollider::SetRotation(float _rot) {
-    m_rotation = _rot;
 
-    for (auto& vert : m_verticesGlobal) {
-        float newVertX = m_originGlobal.x + (vert.x - m_originGlobal.x) * std::cos(m_rotation) - (vert.y - m_originGlobal.y) * std::sin(m_rotation);
-        float newVertY = m_originGlobal.y + (vert.x - m_originGlobal.x) * std::sin(m_rotation) + (vert.y - m_originGlobal.y) * std::cos(m_rotation);
-
-        vert = { newVertX, newVertY };
-    }
 }
 void PolygonCollider::IncrementRotation(float _rot) {
     m_rotation += _rot;
