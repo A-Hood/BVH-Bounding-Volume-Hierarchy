@@ -35,9 +35,6 @@
     <ClInclude Include="source\Collider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="source\FloatRect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="source\Node.h">
       <Filter>Header Files</Filter>
     </ClInclude>

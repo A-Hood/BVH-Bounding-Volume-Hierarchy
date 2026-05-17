@@ -61,6 +61,7 @@ void Application::Run() {
 
 void Application::Update() {
 	float moveSpeed = 3.0f;
+
 	SearchResult result;
 	// Movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
@@ -79,14 +80,14 @@ void Application::Update() {
 		birdObject.left -= moveSpeed;
 	}
 
-	/* Objects Visualisation */
-	for (const auto& go : colliders) {
-		m_window.draw(go.rectVisual);
-	}
 	m_bvh.DrawBVH(m_window, currentDepth);
 #if _BVHDEBUG
 	return;
 	/* BVH Visualisation */
+	/* Objects Visualisation */
+	for (const auto& go : colliders) {
+		m_window.draw(go.rectVisual);
+	}
 
 	// Perform search
 	result = m_bvh.SearchBVH(birdObject);
