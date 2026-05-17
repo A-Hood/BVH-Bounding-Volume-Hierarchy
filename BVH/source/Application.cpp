@@ -35,6 +35,8 @@ void Application::CreateApplication() {
 		std::vector<sf::Vector2f> vecs = { newPos1, newPos2, newPos3, newPos4 };
 		m_objects.emplace_back(vecs);
 		m_objects.at(x).Create();
+		m_objects.at(x).ChangeColour(sf::Color(rR, rG, rB));
+		
 	}
 
 	// Create 
@@ -68,6 +70,12 @@ void Application::Run() {
 void Application::Update() {
 	float moveSpeed = 3.0f;
 	float rotationSpeed = 0.05f;
+
+	// Go quicker
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
+		moveSpeed = 10.0f;
+	}
+
 	// Movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
 		m_testCollider.IncrementPosition({ 0, -moveSpeed });
