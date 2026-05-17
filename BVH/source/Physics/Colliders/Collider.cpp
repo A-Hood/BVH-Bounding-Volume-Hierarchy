@@ -106,6 +106,19 @@ void PolygonCollider::IncrementRotation(float _rot) {
 float PolygonCollider::GetRotation() const {
     return m_rotation;
 }
+
+// Origin
+void PolygonCollider::SetOrigin(const sf::Vector2f& _localPos) {
+    m_originLocal = _localPos;
+    m_originGlobal += _localPos;
+}
+sf::Vector2f PolygonCollider::GetLocalOrigin() const {
+    return m_originLocal;
+}
+sf::Vector2f PolygonCollider::GetGlobalOrigin() const {
+    return m_originGlobal;
+}
+
 // ---------------------------------------------------------------------------------------
 
 

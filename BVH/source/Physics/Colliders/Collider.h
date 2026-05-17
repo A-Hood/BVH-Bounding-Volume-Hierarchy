@@ -136,6 +136,11 @@ public:
 	void IncrementRotation(float _rot) override;
 	float GetRotation() const override;
 
+	// Origin
+	void SetOrigin(const sf::Vector2f& _localPos);
+	sf::Vector2f GetLocalOrigin() const;
+	sf::Vector2f GetGlobalOrigin() const;
+
 	// Vertices
 	const std::vector<sf::Vector2f>& GetVertices() const {
 		return m_verticesGlobal;

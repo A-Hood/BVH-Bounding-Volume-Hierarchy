@@ -46,6 +46,7 @@ void Application::CreateApplication() {
 	std::vector<sf::Vector2f> vecs = { newPos1, newPos2, newPos3, newPos4 };
 	m_testCollider = PolygonCollider(vecs);
 	m_testCollider.Create();
+	m_testCollider.SetOrigin({ size / 2.0f, size / 2.0f });
 }
 
 void Application::Run() {
