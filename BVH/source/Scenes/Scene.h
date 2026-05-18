@@ -38,8 +38,8 @@ public:
 
                 // Only have polygon collision set-up whoops, will add circle collision soon
                 if (Physics::CollisionDetection::PolygonOnPolygonSATCollision(col1.get(), col2.get(), depth, normal)) {
-                    col1.get()->IncrementPosition(-normal * depth);
-                    col2.get()->IncrementPosition(normal * depth);
+                    col1.get()->IncrementPosition(-normal * depth / 2.0f);
+                    col2.get()->IncrementPosition(normal * depth / 2.0f);
                 }
             }
 
