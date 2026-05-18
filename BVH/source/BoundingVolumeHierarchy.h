@@ -22,7 +22,7 @@ public:
     ~BVH();
 public:
     // --- Get reference to the colliders ---
-    void CreateColliderRef(const std::vector<GameObject>& _colliderVecRef);
+    void CreateColliderRef(std::vector<GameObject>& _colliderVecRef);
     // --- Create BVH ---
     void GenerateBVH();
     // --- Search ---
@@ -35,13 +35,13 @@ private:
     bool AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) {}
 
     // --- Generate BVH function steps ---
-    void InitialiseNodeBoundingBox(Node& _currentNode) const;
+    void InitialiseNodeBoundingBox(Node& _currentNode);
     // 1. Create a new node
     void CreateNewNode(Node& _currentNode, size_t _currentDepth);
     // 2. Create the split
     inline sf::Vector2i ChooseSplit(const Node& _currentNode) const;
     // 2. Calculate the bounds of this new node
-    void GrowBoundingBox(Node& _currentNode, const Collider& _collider);
+    void GrowBoundingBox(Node& _currentNode, Collider& _collider);
     // Finds the longest side of the bounding box
     [[nodiscard]] inline bool IsXLongestSide(const Node& _currentNode) const;
 
@@ -58,7 +58,7 @@ private:
     void RecalculateBounds(Node* currentNode) {}
 private:
     // Reference of the colliders
-    std::vector<GameObject> m_colliders;
+    std::vector<Collider*> m_colliders;
 
     // Keep track of all the nodes
     std::vector<Node> m_nodeVec;
