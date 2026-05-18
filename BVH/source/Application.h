@@ -45,6 +45,10 @@ private:
 
 	PolygonCollider m_testCollider;
 	std::vector<PolygonCollider> m_objects;
+
+	bool m_shouldApplyGravity = false;
+	bool m_wasGravityKeyPressed = false;
+	float m_gravity = 9.80665f;
 };
 
 #endif

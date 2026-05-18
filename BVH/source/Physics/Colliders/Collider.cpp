@@ -119,6 +119,19 @@ sf::Vector2f PolygonCollider::GetGlobalOrigin() const {
     return m_originGlobal;
 }
 
+// Returns centre of all vertices
+sf::Vector2f PolygonCollider::GetCentre() const {
+    float totalX = 0.0f, totalY = 0.0f;
+
+    for (auto& vert : m_verticesGlobal) {
+        totalX += vert.x;
+        totalY += vert.y;
+    }
+
+    float size = static_cast<float>(m_verticesGlobal.size());
+    return { totalX / size, totalY / size };
+}
+
 // ---------------------------------------------------------------------------------------
 
 

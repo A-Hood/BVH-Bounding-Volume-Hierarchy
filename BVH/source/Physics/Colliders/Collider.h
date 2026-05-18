@@ -141,6 +141,8 @@ public:
 	sf::Vector2f GetLocalOrigin() const;
 	sf::Vector2f GetGlobalOrigin() const;
 
+	sf::Vector2f GetCentre() const;
+
 	// Vertices
 	const std::vector<sf::Vector2f>& GetVertices() const {
 		return m_verticesGlobal;

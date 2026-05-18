@@ -36,10 +36,19 @@ void Application::CreateApplication() {
 		m_objects.emplace_back(vecs);
 		m_objects.at(x).Create();
 		m_objects.at(x).ChangeColour(sf::Color(rR, rG, rB));
-		
 	}
 
-	// Create 
+	// Create floor (static once implemented)
+	sf::Vector2f floorNewPos1 = sf::Vector2f{ 0.0f, 980.0f } + sf::Vector2f{ 0.0f, 0.0f };
+	sf::Vector2f floorNewPos2 = sf::Vector2f{ 0.0f, 980.0f } + sf::Vector2f{ APPLICATION_SETTINGS().SCREEN_WIDTH, 0.0f };
+	sf::Vector2f floorNewPos3 = sf::Vector2f{ 0.0f, 980.0f } + sf::Vector2f{ APPLICATION_SETTINGS().SCREEN_WIDTH, 100.0f };
+	sf::Vector2f floorNewPos4 = sf::Vector2f{ 0.0f, 980.0f } + sf::Vector2f{ 0.0f, 100.0f };
+	std::vector<sf::Vector2f> floorVecs = { floorNewPos1, floorNewPos2, floorNewPos3, floorNewPos4 };
+	m_objects.emplace_back(floorVecs);
+	m_objects.at(m_objects.size() - 1).Create();
+
+
+	// Create test collider (moveable)
 	float size = 100.0f;
 	sf::Vector2f newPos1 = sf::Vector2f{ 0.0f, 0.0f } + sf::Vector2f{ 0.0f, 0.0f };
 	sf::Vector2f newPos2 = sf::Vector2f{ 0.0f, 0.0f } + sf::Vector2f{ size, 0.0f };
@@ -49,6 +58,7 @@ void Application::CreateApplication() {
 	m_testCollider = PolygonCollider(vecs);
 	m_testCollider.Create();
 	m_testCollider.SetOrigin({ size / 2.0f, size / 2.0f });
+	m_testCollider.SetPosition({ 0.0f, 0.0f });
 }
 
 void Application::Run() {
@@ -68,34 +78,54 @@ void Application::Run() {
 }
 
 void Application::Update() {
-	float moveSpeed = 3.0f;
+	float moveSpeed = 5.0f;
 	float rotationSpeed = 0.05f;
+	sf::Vector2f moveDir = { 0.0f, 0.0f };
 
-	// Go quicker
+	// Speed boost
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::LShift)) {
 		moveSpeed = 10.0f;
 	}
 
 	// Movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-		m_testCollider.IncrementPosition({ 0, -moveSpeed });
+		moveDir.y -= 1;
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-		m_testCollider.IncrementPosition({ 0, moveSpeed });
+		if (!m_shouldApplyGravity) {
+		    moveDir.y += 1;
+		}
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-		m_testCollider.IncrementPosition({ -moveSpeed, 0 });
+		moveDir.x -= 1;
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-		m_testCollider.IncrementPosition({ moveSpeed, 0 });
+		moveDir.x += 1;
+	}
+	if (abs(moveDir.x) + abs(moveDir.y) != 0.0f) {
+	    // Move character by normalised direction
+	    m_testCollider.IncrementPosition(Physics::CollisionDetection::Normalise(moveDir) * moveSpeed);
 	}
 
+	// Rotation
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
 		m_testCollider.IncrementRotation(-rotationSpeed);
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E)) {
 		m_testCollider.IncrementRotation(rotationSpeed);
 	}
+
+	// Gravity
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::R) && !m_wasGravityKeyPressed) {
+		m_shouldApplyGravity = !m_shouldApplyGravity;
+	}
+
+	if (m_shouldApplyGravity) {
+		// Apply gravity
+		m_testCollider.IncrementPosition({ 0.0f, m_gravity });
+	}
+
+	m_wasGravityKeyPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::R);
 
 	// draw each poly collider
 #if SHOW_COLLIDER_VISUALS == 1
@@ -107,10 +137,14 @@ void Application::Update() {
 
 	// Run test collision
 	for (auto& col : m_objects) {
-		if (Physics::CollisionDetection::PolygonOnPolygonSATCollision(&m_testCollider, &col)) {
+		float depth = 0.0f;
+		sf::Vector2f normal = { 0.0f, 0.0f };
+		if (Physics::CollisionDetection::PolygonOnPolygonSATCollision(&m_testCollider, &col, depth, normal)) {
 			// If collided with one object, as of now set the object to red to show collision
 			m_testCollider.ChangeColour(sf::Color::Red);
-			break;
+
+			// Push collider out by depth in direction of normal, this makes all blocks act as static objects
+			m_testCollider.IncrementPosition(-normal * depth);
 		}
 		m_testCollider.ChangeColour(sf::Color::White);
 	}
