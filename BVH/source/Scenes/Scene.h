@@ -71,12 +71,14 @@ protected:
         return m_sceneName;
     }
 
-private:
-    const char* m_sceneName = nullptr;
+protected:
     // Would be much better not to create these dynamically, instead with a fixed object pool
     // This will also need to be switched to base Collider type, do not have any circle collision
     // so useless right now
     std::vector<std::unique_ptr<PolygonCollider>> m_colliders;
+
+private:
+    const char* m_sceneName = nullptr;
 #if SHOW_COLLIDER_VISUALS == 1
     //std::vector<std::unique_ptr<ColliderVisual>> m_colliderVisuals;
 #endif

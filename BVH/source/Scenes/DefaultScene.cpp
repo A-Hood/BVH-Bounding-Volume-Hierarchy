@@ -41,6 +41,7 @@ void DefaultScene::Initialise() {
 	sf::Vector2f floorNewPos4 = sf::Vector2f{ 0.0f, 980.0f } + sf::Vector2f{ 0.0f, 100.0f };
 	std::vector<sf::Vector2f> floorVecs = { floorNewPos1, floorNewPos2, floorNewPos3, floorNewPos4 };
 	AddCollider(std::make_unique<PolygonCollider>(floorVecs));
+	m_floorCollider = GetEnd();
 	GetEnd()->Create();
 
 
@@ -75,9 +76,7 @@ void DefaultScene::Update() {
 		moveDir.y -= 1;
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-		if (!m_shouldApplyGravity) {
-			moveDir.y += 1;
-		}
+		moveDir.y += 1;
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
 		moveDir.x -= 1;
@@ -105,11 +104,50 @@ void DefaultScene::Update() {
 
 	if (m_shouldApplyGravity) {
 		// Apply gravity
-		m_mainCollider->IncrementPosition({ 0.0f, m_gravity });
+		//m_mainCollider->IncrementPosition({ 0.0f, m_gravity });
+		for (auto& col : m_colliders) {
+			// if is player collider
+			if (col.get() == m_mainCollider || col.get() == m_floorCollider) {
+				continue;
+			}
+
+			col->IncrementPosition({ 0.0f, m_gravity });
+		}
 	}
 
 	m_wasGravityKeyPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::R);
 
+}
+
+// Overriden because I haven't implemented static into the collider class, this will be implemented in the RigidBody class
+// so this is very temporary, this would be an IsStatic call to check what type of resolution we should perform
+void DefaultScene::CollisionUpdate() {
+	for (auto& col1 : m_colliders) {
+		for (auto& col2 : m_colliders) {
+			// If collider is self
+			if (col1 == col2) {
+				continue;
+			}
+
+			float depth = 0.0f;
+			sf::Vector2f normal = { 0.0f, 0.0f };
+
+			// Only have polygon collision set-up whoops, will add circle collision soon
+			if (Physics::CollisionDetection::PolygonOnPolygonSATCollision(col1.get(), col2.get(), depth, normal)) {
+				if (col1.get() == m_floorCollider) {
+					col2.get()->IncrementPosition(normal * depth);
+					continue;
+				}
+				else if (col2.get() == m_floorCollider) {
+					col1.get()->IncrementPosition(-normal * depth);
+					continue;
+				}
+
+				col1.get()->IncrementPosition(-normal * depth / 2.0f);
+				col2.get()->IncrementPosition(normal * depth / 2.0f);
+			}
+		}
+	}
 }
 
 void DefaultScene::Close() {

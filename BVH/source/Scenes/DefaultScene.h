@@ -12,6 +12,8 @@ public:
     void Initialise() override;
     void Update() override;
 
+    void CollisionUpdate() override;
+
     void Close() override;
 
 private:
@@ -19,10 +21,12 @@ private:
     uint16_t m_windowHeight;
 
     PolygonCollider* m_mainCollider = nullptr;
+    PolygonCollider* m_floorCollider = nullptr;
+
 
     bool m_shouldApplyGravity = false;
     bool m_wasGravityKeyPressed = false;
-    float m_gravity = 9.80665f;
+    float m_gravity = 9.0f;
 };
 
 #endif
