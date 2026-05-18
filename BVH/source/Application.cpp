@@ -32,7 +32,6 @@ void Application::CreateApplication() {
 	//colliders.emplace_back(6, sf::FloatRect(825, 420, 64, 64));
 
 	// Set-up BVH
-	std::vector<Collider> thing = dynamic_cast<std::vector<Collider>>(colliders);
 	m_bvh.CreateColliderRef(colliders);
 	m_bvh.GenerateBVH();
 }

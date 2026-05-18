@@ -10,9 +10,9 @@ void Collider::CreateBoundingBox(sf::Vector2f _size)
     m_centre.y = m_boundingBox.height / 2;
 }
 
-sf::FloatRect& Collider::GetBoundingBox()
+sf::FloatRect& Collider::GetBoundingBox() const
 {
-    return m_boundingBox;
+    return const_cast<Collider*>(this)->m_boundingBox;
 }
 
 float Collider::GetCentreFromAxis(const int axis) const

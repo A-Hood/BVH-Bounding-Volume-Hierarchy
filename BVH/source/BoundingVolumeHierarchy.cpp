@@ -71,8 +71,8 @@ void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
 
 void BVH::InitialiseNodeBoundingBox(Node& _currentNode) const
 {
-    _currentNode.boundingBox.left = m_colliders[_currentNode.objectIndex].boundingBox.left;
-    _currentNode.boundingBox.top = m_colliders[_currentNode.objectIndex].boundingBox.top;
+    _currentNode.boundingBox.left = m_colliders[_currentNode.objectIndex].GetBoundingBox().left;
+    _currentNode.boundingBox.top = m_colliders[_currentNode.objectIndex].GetBoundingBox().top;
 }
 
 void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
@@ -136,47 +136,47 @@ sf::Vector2i BVH::ChooseSplit(const Node& _currentNode) const
     return {0, static_cast<int>(_currentNode.boundingBox.top) + (static_cast<int>(_currentNode.boundingBox.height) / 2)};
 }
 
-void BVH::GrowBoundingBox(Node& _currentNode, const Collider& _collider) const
+void BVH::GrowBoundingBox(Node& _currentNode, const Collider& _collider)
 {
     if (_currentNode.boundingBox.width <= 0 || _currentNode.boundingBox.height <= 0)
     {
         // We know this node is new.
         // Therefore, we must set the position and size to the current collider
         // Return after
-        _currentNode.boundingBox.left = _collider..left;
-        _currentNode.boundingBox.top = _collider.boundingBox.top;
-        _currentNode.boundingBox.width = _collider.boundingBox.width;
-        _currentNode.boundingBox.height = _collider.boundingBox.height;
+        _currentNode.boundingBox.left = _collider.GetBoundingBox().left;
+        _currentNode.boundingBox.top = _collider.GetBoundingBox().top;
+        _currentNode.boundingBox.width = _collider.GetBoundingBox().width;
+        _currentNode.boundingBox.height = _collider.GetBoundingBox().height;
         return;
     }
     // Left
-    if (_currentNode.boundingBox.left > _collider.boundingBox.left)
+    if (_currentNode.boundingBox.left > _collider.GetBoundingBox().left)
     {
         // Update the width
         if (_currentNode.boundingBox.width > 0)
         {
-            _currentNode.boundingBox.width += (_currentNode.boundingBox.left - _collider.boundingBox.left);
+            _currentNode.boundingBox.width += (_currentNode.boundingBox.left - _collider.GetBoundingBox().left);
         }
         // Update the node BB left
-        _currentNode.boundingBox.left = _collider.boundingBox.left;
+        _currentNode.boundingBox.left = _collider.GetBoundingBox().left;
     }
     // Top
-    if (_currentNode.boundingBox.top > _collider.boundingBox.top)
+    if (_currentNode.boundingBox.top > _collider.GetBoundingBox().top)
     {
         // Update the height
         if (_currentNode.boundingBox.height > 0)
         {
-            _currentNode.boundingBox.height += (_currentNode.boundingBox.top - _collider.boundingBox.top);
+            _currentNode.boundingBox.height += (_currentNode.boundingBox.top - _collider.GetBoundingBox().top);
         }
         // Update the node BB left
-        _currentNode.boundingBox.top = _collider.boundingBox.top;
+        _currentNode.boundingBox.top = _collider.GetBoundingBox().top;
     }
 
     // Width
-    const float width = (_collider.boundingBox.left + _collider.boundingBox.width) - _currentNode.boundingBox.left;
+    const float width = (_collider.GetBoundingBox().left + _collider.GetBoundingBox().width) - _currentNode.boundingBox.left;
     _currentNode.boundingBox.width = std::max(_currentNode.boundingBox.width, width);
     // Height
-    const float height = (_collider.boundingBox.top + _collider.boundingBox.height) - _currentNode.boundingBox.top;
+    const float height = (_collider.GetBoundingBox().top + _collider.GetBoundingBox().height) - _currentNode.boundingBox.top;
     _currentNode.boundingBox.height = std::max(_currentNode.boundingBox.height, height);
 }
 

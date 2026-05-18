@@ -9,13 +9,13 @@ class Collider
 {
 public:
     Collider() = default;
-    ~Collider() = default;
+    virtual ~Collider() = default;
 
 public:
     // Creation
     void CreateBoundingBox(sf::Vector2f _size);
 
-    sf::FloatRect& GetBoundingBox();
+    sf::FloatRect& GetBoundingBox() const;
 
     // Get axis
     [[nodiscard]] float GetCentreFromAxis(int axis) const;
@@ -26,6 +26,7 @@ protected:
 private:
     sf::FloatRect m_boundingBox;
     sf::Vector2f m_centre;
+    float m_rotation = 0.f;
 };
 
 

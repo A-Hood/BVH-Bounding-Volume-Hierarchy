@@ -7,7 +7,7 @@ class GameObject : public Collider, public sf::Drawable
 {
 public:
     GameObject() = default;
-    ~GameObject() = default;
+    ~GameObject() override = default;
 
 public:
     void Initialise();
