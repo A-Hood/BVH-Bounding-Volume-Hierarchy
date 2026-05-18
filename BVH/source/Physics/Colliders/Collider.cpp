@@ -119,7 +119,7 @@ sf::Vector2f PolygonCollider::GetGlobalOrigin() const {
     return m_originGlobal;
 }
 
-// Returns centre of all vertices
+// Returns centre of all vertices.
 sf::Vector2f PolygonCollider::GetCentre() const {
     float totalX = 0.0f, totalY = 0.0f;
 

@@ -142,6 +142,7 @@
     <ClCompile Include="source\GameObject.cpp" />
     <ClCompile Include="source\main.cpp" />
     <ClCompile Include="source\Node.cpp" />
+    <ClCompile Include="source\Scenes\DefaultScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\Application.h" />
@@ -152,6 +153,8 @@
     <ClInclude Include="source\Physics\Colliders\ColliderVisual.h" />
     <ClInclude Include="source\Physics\SATCollision.h" />
     <ClInclude Include="source\Random.h" />
+    <ClInclude Include="source\Scenes\DefaultScene.h" />
+    <ClInclude Include="source\Scenes\Scene.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -9,6 +9,7 @@
 
 #include "BoundingVolumeHierarchy.h"
 #include "GameObject.h"
+#include "Scenes/DefaultScene.h"
 
 #define LOG(x) std::cout << x << std::endl;
 
@@ -22,6 +23,7 @@ public:
 	void CreateApplication();
 	void Run();
 	void Update();
+	void Render();
 	void Close();
 private:
 	struct APPLICATION_SETTINGS {
@@ -46,9 +48,7 @@ private:
 	PolygonCollider m_testCollider;
 	std::vector<PolygonCollider> m_objects;
 
-	bool m_shouldApplyGravity = false;
-	bool m_wasGravityKeyPressed = false;
-	float m_gravity = 9.80665f;
+	DefaultScene m_scene;
 };
 
 #endif

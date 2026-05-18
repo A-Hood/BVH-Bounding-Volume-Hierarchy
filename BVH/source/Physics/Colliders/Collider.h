@@ -40,6 +40,8 @@ public:
 	virtual void SetRotation(float _rot) = 0;
 	virtual void IncrementRotation(float _rot) = 0;
 	virtual float GetRotation() const = 0; // Must override with valid rotation
+
+	virtual bool IsStatic() = 0;
 };
 
 #if SHOW_COLLIDER_VISUALS == 1
@@ -86,6 +88,9 @@ public:
 	// Radius
 	void SetRadius(float _rad);
 	float GetRadius() const;
+
+	// Default to false, classes will override from a Collider type so override this with state
+	bool IsStatic() override { return false; }
 
 private:
 	sf::Vector2f m_centre = { 0.0f, 0.0f };
@@ -142,6 +147,8 @@ public:
 	sf::Vector2f GetGlobalOrigin() const;
 
 	sf::Vector2f GetCentre() const;
+
+	bool IsStatic() override { return false; }
 
 	// Vertices
 	const std::vector<sf::Vector2f>& GetVertices() const {
