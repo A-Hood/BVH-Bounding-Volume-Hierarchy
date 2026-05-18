@@ -14,7 +14,12 @@ void Application::CreateApplication() {
 		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
 		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
-		colliders.emplace_back(x, sf::FloatRect(randomX, randomY, 64, 64), false);
+		GameObject newObject;
+		newObject.Initialise();
+		newObject.SetPosition({static_cast<float>(randomX), static_cast<float>(randomY)});
+		newObject.SetSize({64, 64});
+
+		colliders.emplace_back(std::move(newObject));
 	}
 
 	// Great example of how using SAH is more efficient than slicing the longest node axis
@@ -27,6 +32,7 @@ void Application::CreateApplication() {
 	//colliders.emplace_back(6, sf::FloatRect(825, 420, 64, 64));
 
 	// Set-up BVH
+	std::vector<Collider> thing = dynamic_cast<std::vector<Collider>>(colliders);
 	m_bvh.CreateColliderRef(colliders);
 	m_bvh.GenerateBVH();
 }
@@ -82,11 +88,10 @@ void Application::Update() {
 
 	m_bvh.DrawBVH(m_window, currentDepth);
 #if _BVHDEBUG
-	return;
 	/* BVH Visualisation */
 	/* Objects Visualisation */
 	for (const auto& go : colliders) {
-		m_window.draw(go.rectVisual);
+		m_window.draw(go);
 	}
 
 	// Perform search

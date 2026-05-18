@@ -4,9 +4,8 @@
 #include <vector>
 #include <SFML/Graphics/RenderTarget.hpp>
 
+#include "GameObject.h"
 #include "Node.h"
-
-struct Collider;
 
 struct SearchResult {
     // DEBUG
@@ -23,7 +22,7 @@ public:
     ~BVH();
 public:
     // --- Get reference to the colliders ---
-    void CreateColliderRef(const std::vector<Collider>& _colliderVecRef);
+    void CreateColliderRef(const std::vector<GameObject>& _colliderVecRef);
     // --- Create BVH ---
     void GenerateBVH();
     // --- Search ---
@@ -59,7 +58,7 @@ private:
     void RecalculateBounds(Node* currentNode) {}
 private:
     // Reference of the colliders
-    std::vector<Collider> m_colliders;
+    std::vector<GameObject> m_colliders;
 
     // Keep track of all the nodes
     std::vector<Node> m_nodeVec;

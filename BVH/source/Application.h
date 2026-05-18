@@ -8,7 +8,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "BoundingVolumeHierarchy.h"
-#include "Collider.h"
+#include "GameObject.h"
 
 #define LOG(x) std::cout << x << std::endl;
 
@@ -38,7 +38,7 @@ private:
 	BVH m_bvh;
 
 	// DEBUG ------------------------------------------------------------------------
-	std::vector<Collider> colliders;
+	std::vector<GameObject> colliders;
 	sf::FloatRect birdObject = { 1000, 1000, 100, 100 };
 	sf::RectangleShape birdShape;
 	size_t currentDepth = 0;
