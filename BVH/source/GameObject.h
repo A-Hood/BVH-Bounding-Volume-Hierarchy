@@ -21,7 +21,9 @@ public:
 
 private:
     // DEBUG ONLY
+#if _BVHDEBUG
     sf::RectangleShape rectVisual;
+#endif
     // Position
     sf::Vector2f m_position;
 
