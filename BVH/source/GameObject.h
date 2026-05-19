@@ -3,7 +3,7 @@
 
 #include "Collider.h"
 
-class GameObject : public Collider, public sf::Drawable
+class GameObject : public sf::Drawable
 {
 public:
     GameObject() = default;
@@ -14,6 +14,8 @@ public:
     void SetPosition(sf::Vector2f _position);
     void SetSize(sf::Vector2f _size);
 
+    Collider& GetCollider();
+
     // DEBUG DRAW
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 
@@ -22,4 +24,6 @@ private:
     sf::RectangleShape rectVisual;
     // Position
     sf::Vector2f m_position;
+
+    Collider m_collider;
 };

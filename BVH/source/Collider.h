@@ -15,7 +15,7 @@ public:
     sf::FloatRect& GetBoundingBox();
     // Get axis
     [[nodiscard]] int GetCentreFromAxis(int axis) const;
-protected:
+
     // Creation
     void CreateBoundingBox(sf::Vector2f _size);
     void UpdateBoundingBoxPos(sf::Vector2f _position);

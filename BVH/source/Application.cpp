@@ -85,8 +85,8 @@ void Application::Update() {
 		birdObject.left -= moveSpeed;
 	}
 
-	m_bvh.DrawBVH(m_window, currentDepth);
 #if _BVHDEBUG
+	m_bvh.DrawBVH(m_window, currentDepth);
 	/* BVH Visualisation */
 	/* Objects Visualisation */
 	for (const auto& go : colliders) {

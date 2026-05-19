@@ -58,7 +58,7 @@ private:
     void RecalculateBounds(Node* currentNode) {}
 private:
     // Reference of the colliders
-    std::vector<Collider*> m_colliders;
+    std::vector<Collider> m_colliders;
 
     // Keep track of all the nodes
     std::vector<Node> m_nodeVec;

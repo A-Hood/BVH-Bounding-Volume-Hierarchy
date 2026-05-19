@@ -21,8 +21,10 @@ void BVH::CreateColliderRef(std::vector<GameObject>& _colliderVecRef)
 {
     for (GameObject& object : _colliderVecRef)
     {
-        m_colliders.emplace_back(&object);
+        Collider newCollider = object.GetCollider();
+        m_colliders.emplace_back(newCollider);
     }
+
     m_nodeVec.reserve((2 * m_colliders.size()) - 1);
 }
 
@@ -38,7 +40,7 @@ void BVH::GenerateBVH()
     // Find the size of the master node
     for (auto index = masterNode.objectIndex; index < masterNode.objectIndex + masterNode.objectCount; index++)
     {
-        GrowBoundingBox(masterNode, *m_colliders[index]);
+        GrowBoundingBox(masterNode, m_colliders[index]);
     }
 
     // Move into the vector
@@ -73,8 +75,8 @@ void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
 
 void BVH::InitialiseNodeBoundingBox(Node& _currentNode)
 {
-    _currentNode.boundingBox.left = m_colliders[_currentNode.objectIndex]->GetBoundingBox().left;
-    _currentNode.boundingBox.top = m_colliders[_currentNode.objectIndex]->GetBoundingBox().top;
+    _currentNode.boundingBox.left = m_colliders[_currentNode.objectIndex].GetBoundingBox().left;
+    _currentNode.boundingBox.top = m_colliders[_currentNode.objectIndex].GetBoundingBox().top;
 }
 
 void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
@@ -106,10 +108,10 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
 
     for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
-        const bool isSideA = m_colliders[index]->GetCentreFromAxis(splitAxis) < splitPosition;
+        const bool isSideA = m_colliders[index].GetCentreFromAxis(splitAxis) < splitPosition;
         Node& currentChild = isSideA ? childA : childB;
         // Changes the size of the bounding box of the child node using the current collider
-        GrowBoundingBox(currentChild, *m_colliders[index]);
+        GrowBoundingBox(currentChild, m_colliders[index]);
         currentChild.objectCount++;
 
         if (isSideA)
