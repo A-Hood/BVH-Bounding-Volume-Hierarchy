@@ -22,7 +22,6 @@ public:
 
 private:
     sf::FloatRect m_boundingBox;
-    sf::Vector2f m_centre;
     float m_rotation = 0.f;
 };
 
