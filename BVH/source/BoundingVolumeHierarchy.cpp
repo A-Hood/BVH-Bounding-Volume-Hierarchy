@@ -32,9 +32,7 @@ void BVH::AddCollider(Collider* _collider)
 // Should be changed to not require colliders as parameters
 void BVH::Generate()
 {
-#if _BVHDEBUG
 	auto t1 = std::chrono::high_resolution_clock::now();
-#endif
 
 	// Creates the master node
 	m_masterNode = new Node();
@@ -42,11 +40,9 @@ void BVH::Generate()
 	// Start the recursion
 	CreateNewNode(m_masterNode, 1);
 
-#if _BVHDEBUG
 	auto t2 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float, std::milli> time = t2 - t1;
 	std::cout << "Time to create BVH: " << std::to_string(time.count()) << "ms\n";
-#endif
 }
 
 SearchResult BVH::SearchBVH(const FloatRect& _targetRect) {
@@ -74,6 +70,7 @@ Node* BVH::GetMasterNode() const
 
 void BVH::DrawBVH(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const
 {
+#if _BVHDEBUG
 	_target.draw(_currentNode->bbVisual);
 	_currentNode->ChangeVisibility(_currentDepth);
 
@@ -85,6 +82,7 @@ void BVH::DrawBVH(sf::RenderTarget& _target, Node* _currentNode, size_t _current
 	{
 		DrawBVH(_target, _currentNode->childB, _currentDepth);
 	}
+#endif
 }
 
 
@@ -105,16 +103,16 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth)
 	currentNode->DefineDepth(currentDepth);
 #endif
 
-	// Calculate the bounding box
-	FloatRect boundingBox = CalculateNodeBoundingBox(currentNode->m_colliders);
-	currentNode->DefineBounds(boundingBox);
-
 	// Return if the number of game objects is m_maxObjectsInLeafNode or less
 	// And it has reached the maximum depth
 	if (currentNode->m_colliders.size() <= m_maxObjectsInLeafNode || currentDepth >= m_maximumDepth)
 	{
 		return;
 	}
+	// Calculate the bounding box
+	FloatRect boundingBox = CalculateNodeBoundingBox(currentNode->m_colliders);
+	currentNode->DefineBounds(boundingBox);
+
 
 	// Create child nodes
 	Node* childA = new Node();
