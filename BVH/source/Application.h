@@ -42,7 +42,7 @@ private:
 	sf::FloatRect birdObject = { 1000, 1000, 100, 100 };
 	sf::RectangleShape birdShape;
 	size_t currentDepth = 0;
-	size_t m_numberOfObjects = 400000;
+	size_t m_numberOfObjects = 25;
 };
 
 #endif

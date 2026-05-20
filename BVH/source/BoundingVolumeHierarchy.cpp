@@ -36,7 +36,6 @@ void BVH::GenerateBVH()
     masterNode.objectIndex = 0;
     masterNode.objectCount = m_colliders.size();
 
-    InitialiseNodeBoundingBox(masterNode);
     // Find the size of the master node
     for (auto index = masterNode.objectIndex; index < masterNode.objectIndex + masterNode.objectCount; index++)
     {
@@ -73,16 +72,10 @@ void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
     }
 }
 
-void BVH::InitialiseNodeBoundingBox(Node& _currentNode)
-{
-    _currentNode.boundingBox.left = m_colliders[_currentNode.objectIndex].GetBoundingBox().left;
-    _currentNode.boundingBox.top = m_colliders[_currentNode.objectIndex].GetBoundingBox().top;
-}
-
 void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
 {
     _currentDepth++;
-    if (_currentNode.objectCount <= m_maxObjectsInLeafNode || _currentDepth >= m_maximumDepth)
+    if (_currentDepth >= m_maximumDepth)
     {
         // Do not continue as we have hit the max size
         return;
@@ -121,6 +114,7 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
             childB.objectIndex++;
         }
     }
+
     m_nodeVec.emplace_back(childA);
     m_nodeVec.emplace_back(childB);
 
@@ -137,7 +131,7 @@ sf::Vector2i BVH::ChooseSplit(const Node& _currentNode) const
         // X is the longest
         return {0, static_cast<int>(_currentNode.boundingBox.left) + (static_cast<int>(_currentNode.boundingBox.width) / 2)};
     }
-    return {0, static_cast<int>(_currentNode.boundingBox.top) + (static_cast<int>(_currentNode.boundingBox.height) / 2)};
+    return {1, static_cast<int>(_currentNode.boundingBox.top) + (static_cast<int>(_currentNode.boundingBox.height) / 2)};
 }
 
 void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)

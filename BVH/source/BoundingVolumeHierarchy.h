@@ -35,7 +35,6 @@ private:
     bool AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) {}
 
     // --- Generate BVH function steps ---
-    void InitialiseNodeBoundingBox(Node& _currentNode);
     // 1. Create a new node
     void CreateNewNode(Node& _currentNode, size_t _currentDepth);
     // 2. Create the split
@@ -70,7 +69,7 @@ private:
 	std::vector<Node*> m_dynamicNodeQueue;
 
     // Parameters
-    size_t m_maximumDepth = 30;
+    size_t m_maximumDepth = 8;
     size_t m_maxObjectsInLeafNode = 3;
 };
 
