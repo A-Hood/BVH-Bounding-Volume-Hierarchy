@@ -1,5 +1,12 @@
 ﻿#include "GameObject.h"
 
+GameObject::GameObject(sf::FloatRect _rect)
+{
+    Initialise();
+    SetPosition({_rect.left, _rect.top});
+    SetSize({_rect.width, _rect.height});
+}
+
 void GameObject::Initialise()
 {
     int rR = rand() % 255;

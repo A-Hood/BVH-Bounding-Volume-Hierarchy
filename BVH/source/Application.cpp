@@ -23,13 +23,13 @@ void Application::CreateApplication() {
 	}
 
 	// Great example of how using SAH is more efficient than slicing the longest node axis
-	//colliders.emplace_back(0, sf::FloatRect(1584, 416, 64, 64));
-	//colliders.emplace_back(1, sf::FloatRect(104, 719, 64, 64));
-	//colliders.emplace_back(2, sf::FloatRect(412, 311, 64, 64));
-	//colliders.emplace_back(3, sf::FloatRect(1698, 332, 64, 64));
-	//colliders.emplace_back(4, sf::FloatRect(1808, 739, 64, 64));
-	//colliders.emplace_back(5, sf::FloatRect(252, 179, 64, 64));
-	//colliders.emplace_back(6, sf::FloatRect(825, 420, 64, 64));
+	//colliders.emplace_back(sf::FloatRect(1584, 416, 64, 64));
+	//colliders.emplace_back(sf::FloatRect(104, 719, 64, 64));
+	//colliders.emplace_back(sf::FloatRect(412, 311, 64, 64));
+	//colliders.emplace_back(sf::FloatRect(1698, 332, 64, 64));
+	//colliders.emplace_back(sf::FloatRect(1808, 739, 64, 64));
+	//colliders.emplace_back(sf::FloatRect(252, 179, 64, 64));
+	//colliders.emplace_back(sf::FloatRect(825, 420, 64, 64));
 
 	// Set-up BVH
 	m_bvh.CreateColliderRef(colliders);

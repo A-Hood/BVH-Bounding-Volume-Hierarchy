@@ -36,19 +36,15 @@ private:
 
     // --- Generate BVH function steps ---
     // 1. Create a new node
-    void CreateNewNode(Node& _currentNode, size_t _currentDepth);
-    // 2. Create the split
-    inline sf::Vector2i ChooseSplit(const Node& _currentNode) const;
-    // 2. Calculate the bounds of this new node
-    void GrowBoundingBox(Node& _currentNode, Collider& _collider);
-    // Finds the longest side of the bounding box
+    void CreateNewNode(Node& _currentNode, uint32_t parentIndex, size_t _currentDepth);
+    // 2.a Finds the longest side of the bounding box
     [[nodiscard]] inline bool IsXLongestSide(const Node& _currentNode) const;
-
+    // 2.b Create the split
+    inline sf::Vector2i ChooseSplit(const Node& _currentNode) const;
+    // 3. Calculate the bounds of this new node
+    void GrowBoundingBox(Node& _currentNode, Collider& _collider);
 
     inline void DefineNodeType(Node* _currentNode, bool _nodeIsStatic) {}
-
-    // --- Destroy BVH ---
-    void TraversalNodeDestroy(const Node* _currentNode) {}
 
     // --- Internal search ---
     void RecursiveSearch(const sf::FloatRect& _searchRect, const Node* _currentNode) {}
@@ -63,13 +59,13 @@ private:
     std::vector<Node> m_nodeVec;
 
     // Collided objects with the subject
-    std::vector<uint32_t> m_collidedObjectsQueue;
+    //std::vector<uint32_t> m_collidedObjectsQueue;
 
     // Dynamic nodes that need to be updated if the objects inside the leaf nodes move
-	std::vector<Node*> m_dynamicNodeQueue;
+	//std::vector<Node*> m_dynamicNodeQueue;
 
     // Parameters
-    size_t m_maximumDepth = 8;
+    size_t m_maximumDepth = 50;
     size_t m_maxObjectsInLeafNode = 3;
 };
 

@@ -7,6 +7,7 @@ class GameObject : public sf::Drawable
 {
 public:
     GameObject() = default;
+    GameObject(sf::FloatRect _rect);
     ~GameObject() override = default;
 
 public:

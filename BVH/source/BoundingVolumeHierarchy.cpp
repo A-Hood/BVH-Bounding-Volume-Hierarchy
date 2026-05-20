@@ -14,7 +14,8 @@ BVH::BVH(size_t _maxDepth)
 
 BVH::~BVH()
 {
-    // TODO: Clean up the memory
+    m_colliders.clear();
+    m_nodeVec.clear();
 }
 
 void BVH::CreateColliderRef(std::vector<GameObject>& _colliderVecRef)
@@ -32,7 +33,7 @@ void BVH::GenerateBVH()
 {
     auto t1 = std::chrono::system_clock::now();
     // Create master node - Master node is the first node in the vector
-    Node masterNode;
+    Node& masterNode = m_nodeVec.emplace_back();
     masterNode.objectIndex = 0;
     masterNode.objectCount = m_colliders.size();
 
@@ -43,9 +44,7 @@ void BVH::GenerateBVH()
     }
 
     // Move into the vector
-    m_nodeVec.emplace_back(masterNode);
-
-    CreateNewNode(masterNode, 0);
+    CreateNewNode(masterNode, 0, 0);
 
     auto t2 = std::chrono::system_clock::now();
     std::chrono::duration<float, std::milli> time = t2 - t1;
@@ -55,6 +54,7 @@ void BVH::GenerateBVH()
 
 void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
 {
+#if _BVHDEBUG
     for (Node& currentNode : m_nodeVec)
     {
         if (currentNode.currentDepth != _currentDepth)
@@ -70,12 +70,13 @@ void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
 
         _target.draw(debugRect);
     }
+#endif
 }
 
-void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
+void BVH::CreateNewNode(Node& _currentNode, uint32_t parentIndex, size_t _currentDepth)
 {
     _currentDepth++;
-    if (_currentDepth >= m_maximumDepth)
+    if (_currentDepth >= m_maximumDepth || _currentNode.objectCount <= m_maxObjectsInLeafNode)
     {
         // Do not continue as we have hit the max size
         return;
@@ -88,16 +89,23 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
     // Store where the starting position of the children are
     // This will technically be the index just after the parent index
     _currentNode.childIndex = m_nodeVec.size();
-    //size_t parentIndex = m_nodeVec.size() - 1;
+
+    uint32_t currentNodeVecSize = m_nodeVec.size();
 
     // Create child nodes
     Node childA;
     childA.objectIndex = _currentNode.objectIndex;
-    childA.currentDepth = _currentDepth;
+    childA.parentIndex = parentIndex;
 
     Node childB;
     childB.objectIndex = _currentNode.objectIndex;
+    childB.parentIndex = parentIndex;
+
+#if _BVHDEBUG
+    // DEBUGGING ONLY
+    childA.currentDepth = _currentDepth;
     childB.currentDepth = _currentDepth;
+#endif
 
     for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
@@ -115,13 +123,17 @@ void BVH::CreateNewNode(Node& _currentNode, size_t _currentDepth)
         }
     }
 
-    m_nodeVec.emplace_back(childA);
-    m_nodeVec.emplace_back(childB);
+    Node& currentChildA = m_nodeVec.emplace_back(childA);
+    Node& currentChildB = m_nodeVec.emplace_back(childB);
 
-    CreateNewNode(childA, _currentDepth);
-    CreateNewNode(childB, _currentDepth);
+    CreateNewNode(currentChildA, currentNodeVecSize, _currentDepth);
+    CreateNewNode(currentChildB, currentNodeVecSize + 1, _currentDepth);
+
 }
-
+bool BVH::IsXLongestSide(const Node& _currentNode) const
+{
+    return _currentNode.boundingBox.width > _currentNode.boundingBox.height;
+}
 sf::Vector2i BVH::ChooseSplit(const Node& _currentNode) const
 {
     // X returns the splitAxis
@@ -177,9 +189,4 @@ void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
     // Height
     const float height = (boundingBox.top + boundingBox.height) - _currentNode.boundingBox.top;
     _currentNode.boundingBox.height = std::max(_currentNode.boundingBox.height, height);
-}
-
-bool BVH::IsXLongestSide(const Node& _currentNode) const
-{
-    return _currentNode.boundingBox.width > _currentNode.boundingBox.height;
 }
