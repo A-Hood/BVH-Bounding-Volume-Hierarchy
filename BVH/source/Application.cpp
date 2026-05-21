@@ -8,6 +8,10 @@ void Application::CreateApplication() {
 	m_window.setKeyRepeatEnabled(false);
 	m_window.setFramerateLimit(60);
 
+	birdObject.Initialise();
+	birdObject.SetPosition({500, 400});
+	birdObject.SetSize({64, 64});
+
 	// Generate random colliders (DEBUG)
 	for (size_t x = 0; x < m_numberOfObjects; x++)
 	{
@@ -34,6 +38,10 @@ void Application::CreateApplication() {
 	// Set-up BVH
 	m_bvh.CreateColliderRef(colliders);
 	m_bvh.GenerateBVH();
+
+	//auto result = m_bvh.SearchBVH(birdObject);
+	//LOG("Time taken to search through BVH: " + std::to_string(result.searchTime) + "ms");
+	//LOG("Amount of objects collided: " + std::to_string(result.numberCollidedObjects));
 }
 
 void Application::Run() {
@@ -65,25 +73,23 @@ void Application::Run() {
 }
 
 void Application::Update() {
-	float moveSpeed = 3.0f;
+	float moveSpeed = 10.0f;
 
 	SearchResult result;
 	// Movement
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-		birdObject.top -= moveSpeed;
+		birdObject.IncrementPosition({0, -moveSpeed});
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-		birdObject.top += moveSpeed;
+		birdObject.IncrementPosition({0, moveSpeed});
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-		birdObject.left -= moveSpeed;
+		birdObject.IncrementPosition({-moveSpeed, 0});
 	}
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-		birdObject.left += moveSpeed;
+		birdObject.IncrementPosition({moveSpeed, 0});
 	}
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Q)) {
-		birdObject.left -= moveSpeed;
-	}
+
 
 #if _BVHDEBUG
 	m_bvh.DrawBVH(m_window, currentDepth);
@@ -94,21 +100,19 @@ void Application::Update() {
 	}
 
 	// Perform search
-	result = m_bvh.SearchBVH(birdObject);
+	//result = m_bvh.SearchBVH(birdObject);
 	//std::cout << "Time taken to search BVH: " << result.searchTime << "ms" << std::endl;
 	//std::cout << "Amount of objects collided: " << result.numberCollidedObjects << std::endl;
 
 	// Set object red if collision occurs
 	if (result.numberCollidedObjects > 0) {
-		birdShape.setFillColor({ 255, 0, 0, 255 });
+		birdObject.GetDebugShape().setFillColor({ 255, 0, 0, 255 });
 	}
 	else {
-		birdShape.setFillColor({ 255, 255, 255, 255 });
+		birdObject.GetDebugShape().setFillColor({ 255, 255, 255, 255 });
 	}
-	birdShape.setPosition(birdObject.left, birdObject.top);
-	birdShape.setSize({ birdObject.width, birdObject.height });
 
-	m_window.draw(birdShape);
+	m_window.draw(birdObject);
 #endif
 }
 

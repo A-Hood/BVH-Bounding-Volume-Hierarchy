@@ -14,19 +14,14 @@ BVH::BVH(size_t _maxDepth)
 
 BVH::~BVH()
 {
-    m_colliders.clear();
+    m_gameObjects.clear();
     m_nodeVec.clear();
 }
 
-void BVH::CreateColliderRef(std::vector<GameObject>& _colliderVecRef)
+void BVH::CreateColliderRef(const std::vector<GameObject>& _colliderVecRef)
 {
-    for (GameObject& object : _colliderVecRef)
-    {
-        Collider newCollider = object.GetCollider();
-        m_colliders.emplace_back(newCollider);
-    }
-
-    m_nodeVec.reserve((2 * m_colliders.size()) - 1);
+    m_gameObjects = _colliderVecRef;
+    m_nodeVec.reserve((2 * m_gameObjects.size()) - 1);
 }
 
 void BVH::GenerateBVH()
@@ -35,21 +30,40 @@ void BVH::GenerateBVH()
     // Create master node - Master node is the first node in the vector
     Node& masterNode = m_nodeVec.emplace_back();
     masterNode.objectIndex = 0;
-    masterNode.objectCount = m_colliders.size();
+    masterNode.objectCount = m_gameObjects.size();
 
     // Find the size of the master node
     for (auto index = masterNode.objectIndex; index < masterNode.objectIndex + masterNode.objectCount; index++)
     {
-        GrowBoundingBox(masterNode, m_colliders[index]);
+        GrowBoundingBox(masterNode, m_gameObjects[index].GetCollider());
     }
 
     // Move into the vector
-    CreateNewNode(masterNode, 0, 0);
+    CreateNewNode(masterNode, 0, 1);
 
     auto t2 = std::chrono::system_clock::now();
     std::chrono::duration<float, std::milli> time = t2 - t1;
-    LOG("Time to create in ms: " + std::to_string(time.count()));
+    LOG("Time to create BVH: " + std::to_string(time.count()) + "ms");
 
+}
+
+SearchResult BVH::SearchBVH(GameObject& _targetRect)
+{
+    m_collidedObjectsQueue.clear();
+
+    // Traverse through the bvh, then check objects within that node
+    auto t1 = std::chrono::high_resolution_clock::now();
+    RecursiveSearch(_targetRect.GetCollider(), m_nodeVec[0]); // Start search at master node
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float, std::milli> bvhSearch = t2 - t1;
+
+
+    // Set result of search
+    SearchResult result;
+    result.searchTime = bvhSearch.count();
+    result.numberCollidedObjects = m_collidedObjectsQueue.size();
+
+    return result;
 }
 
 void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
@@ -73,9 +87,16 @@ void BVH::DrawBVH(sf::RenderTarget& _target, size_t _currentDepth)
 #endif
 }
 
-void BVH::CreateNewNode(Node& _currentNode, uint32_t parentIndex, size_t _currentDepth)
+bool BVH::AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) const
 {
-    _currentDepth++;
+    return _boxA.left <= _boxB.left + _boxB.width &&
+        _boxA.top <= _boxB.top + _boxB.height &&
+        _boxA.left + _boxA.width >= _boxB.left &&
+        _boxA.top + _boxA.height >= _boxB.top;
+}
+
+void BVH::CreateNewNode(Node& _currentNode, const uint32_t parentIndex, const size_t _currentDepth)
+{
     if (_currentDepth >= m_maximumDepth || _currentNode.objectCount <= m_maxObjectsInLeafNode)
     {
         // Do not continue as we have hit the max size
@@ -109,23 +130,22 @@ void BVH::CreateNewNode(Node& _currentNode, uint32_t parentIndex, size_t _curren
 
     for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
-        const bool isSideA = m_colliders[index].GetCentreFromAxis(splitAxis) < splitPosition;
+        const bool isSideA = m_gameObjects[index].GetCollider().GetCentreFromAxis(splitAxis) < splitPosition;
         Node& currentChild = isSideA ? childA : childB;
         // Changes the size of the bounding box of the child node using the current collider
-        GrowBoundingBox(currentChild, m_colliders[index]);
+        GrowBoundingBox(currentChild, m_gameObjects[index].GetCollider());
         currentChild.objectCount++;
 
         if (isSideA)
         {
             const uint32_t swap = currentChild.objectIndex + currentChild.objectCount - 1;
-            std::swap(m_colliders[index], m_colliders[swap]);
+            std::swap(m_gameObjects[index], m_gameObjects[swap]);
             childB.objectIndex++;
         }
     }
 
-    CreateNewNode(childA, currentNodeVecSize, _currentDepth);
-    CreateNewNode(childB, currentNodeVecSize + 1, _currentDepth);
-
+    CreateNewNode(childA, currentNodeVecSize, _currentDepth + 1);
+    CreateNewNode(childB, currentNodeVecSize + 1, _currentDepth + 1);
 }
 bool BVH::IsXLongestSide(const Node& _currentNode) const
 {
@@ -186,4 +206,35 @@ void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
     // Height
     const float height = (boundingBox.top + boundingBox.height) - _currentNode.boundingBox.top;
     _currentNode.boundingBox.height = std::max(_currentNode.boundingBox.height, height);
+}
+
+void BVH::RecursiveSearch(Collider& _searchObject, const Node& _currentNode)
+{
+    // If the search object is not within the current node bounding box, then return
+    if (!AABBCollision(_currentNode.boundingBox, _searchObject.GetBoundingBox()) )
+    {
+        return;
+    }
+    if (_currentNode.childIndex != 0)
+    {
+        // Therefore we are not at a leaf node
+        // Keep using recursion
+        //Node& childA = m_nodeVec[_currentNode.childIndex];
+        RecursiveSearch(_searchObject, m_nodeVec[_currentNode.childIndex]);
+
+        //Node& childB = m_nodeVec[_currentNode.childIndex + 1];
+        RecursiveSearch(_searchObject, m_nodeVec[_currentNode.childIndex + 1]);
+        return;
+    }
+    // We are now at a leaf node
+    // Check all the colliders within this node. Returns the index of gameobjects it collided with
+    for (uint32_t index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
+    {
+        GameObject& currentGameObject = m_gameObjects[index];
+        if (AABBCollision(currentGameObject.GetCollider().GetBoundingBox(), _searchObject.GetBoundingBox()))
+        {
+            // Object hit. Note down the index of collision
+            m_collidedObjectsQueue.emplace_back(index);
+        }
+    }
 }
