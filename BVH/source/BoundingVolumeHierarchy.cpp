@@ -114,11 +114,11 @@ void BVH::CreateNewNode(Node& _currentNode, const uint32_t parentIndex, const si
     uint32_t currentNodeVecSize = _currentNode.childIndex;
 
     // Create child nodes
-    Node& childA = m_nodeVec.emplace_back();
+    Node childA;
     childA.objectIndex = _currentNode.objectIndex;
     childA.parentIndex = parentIndex;
 
-    Node& childB = m_nodeVec.emplace_back();
+    Node childB;
     childB.objectIndex = _currentNode.objectIndex;
     childB.parentIndex = parentIndex;
 
@@ -144,8 +144,11 @@ void BVH::CreateNewNode(Node& _currentNode, const uint32_t parentIndex, const si
         }
     }
 
-    CreateNewNode(childA, currentNodeVecSize, _currentDepth + 1);
-    CreateNewNode(childB, currentNodeVecSize + 1, _currentDepth + 1);
+    Node& currentChildA = m_nodeVec.emplace_back(childA);
+    Node& currentChildB = m_nodeVec.emplace_back(childB);
+
+    CreateNewNode(currentChildA, currentNodeVecSize, _currentDepth + 1);
+    CreateNewNode(currentChildB, currentNodeVecSize + 1, _currentDepth + 1);
 }
 bool BVH::IsXLongestSide(const Node& _currentNode) const
 {
