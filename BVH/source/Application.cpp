@@ -81,7 +81,6 @@ void Application::Update() {
 		birdObject.left -= moveSpeed;
 	}
 
-#if _BVHDEBUG
 	/* Objects Visualisation */
 	for (const auto& go : colliders) {
 		m_window.draw(go.rectVisual);
@@ -105,7 +104,6 @@ void Application::Update() {
 	birdShape.setSize({ birdObject.width, birdObject.height });
 
 	m_window.draw(birdShape);
-#endif
 }
 
 void Application::Close() {

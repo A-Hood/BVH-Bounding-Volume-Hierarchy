@@ -10,7 +10,6 @@ struct Collider {
 		boundingBox = _boundingBox;
 		isStatic = _isStatic;
 
-#if _BVHDEBUG
 		/* SFML Specifics */
 		rectVisual.setPosition(boundingBox.left, boundingBox.top);
 		rectVisual.setSize({ _boundingBox.width, _boundingBox.height });
@@ -19,7 +18,6 @@ struct Collider {
 		int rG = rand() % 255;
 		int rB = rand() % 255;
 		rectVisual.setFillColor(sf::Color(rR, rG, rB));
-#endif
 	}
 
 	void SetPosition(sf::Vector2i position)
@@ -27,9 +25,7 @@ struct Collider {
 		boundingBox.left = position.x;
 		boundingBox.top = position.y;
 
-#if _BVHDEBUG
 		rectVisual.setPosition(boundingBox.left, boundingBox.top);
-#endif
 	}
 
 	void IncrementPosition(sf::Vector2i position)
@@ -37,9 +33,7 @@ struct Collider {
 		boundingBox.left += position.x;
 		boundingBox.top += position.y;
 
-#if _BVHDEBUG
 		rectVisual.setPosition(boundingBox.left, boundingBox.top);
-#endif
 	}
 
 	uint16_t id;
@@ -47,10 +41,8 @@ struct Collider {
 	bool isStatic = true;
 	float rotation = 0.0f;
 
-#if _BVHDEBUG
 	// DEBUG ---------------------------------------------------------------------
 	sf::RectangleShape rectVisual;
-#endif
 };
 
 #endif
