@@ -12,6 +12,9 @@ void Application::CreateApplication() {
 	birdObject.SetPosition({500, 400});
 	birdObject.SetSize({64, 64});
 
+	gameObjectBatch.setPrimitiveType(sf::Quads);
+	gameObjectBatch.resize(m_numberOfObjects * 4);
+
 	// Generate random colliders (DEBUG)
 	for (size_t x = 0; x < m_numberOfObjects; x++)
 	{
@@ -23,8 +26,22 @@ void Application::CreateApplication() {
 		newObject.SetPosition({static_cast<float>(randomX), static_cast<float>(randomY)});
 		newObject.SetSize({64, 64});
 
+		auto& vertices = newObject.GetVertexArray();
+		gameObjectBatch[(x * 4) + 0].position = vertices[0].position;
+		gameObjectBatch[(x * 4) + 1].position = vertices[1].position;
+		gameObjectBatch[(x * 4) + 2].position = vertices[2].position;
+		gameObjectBatch[(x * 4) + 3].position = vertices[3].position;
+		
+		gameObjectBatch[(x * 4) + 0].color = vertices[0].color;
+		gameObjectBatch[(x * 4) + 1].color = vertices[1].color;
+		gameObjectBatch[(x * 4) + 2].color = vertices[2].color;
+		gameObjectBatch[(x * 4) + 3].color = vertices[3].color;
+
+		// Add to vector
 		colliders.emplace_back(std::move(newObject));
 	}
+
+
 
 	// Great example of how using SAH is more efficient than slicing the longest node axis
 	//colliders.emplace_back(sf::FloatRect(1584, 416, 64, 64));
@@ -45,7 +62,13 @@ void Application::CreateApplication() {
 }
 
 void Application::Run() {
+
+	sf::Clock clock;
+
 	while (m_window.isOpen()) {
+		float timeElapsed = clock.getElapsedTime().asSeconds();
+		clock.restart();
+
 		sf::Event event;
 		while (m_window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed)
@@ -60,6 +83,10 @@ void Application::Run() {
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) {
 					currentDepth--;
 					LOG(currentDepth)
+				}
+				if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+				{
+					LOG(1 / timeElapsed)
 				}
 			}
 		}
@@ -90,30 +117,19 @@ void Application::Update() {
 		birdObject.IncrementPosition({moveSpeed, 0});
 	}
 
-
-#if _BVHDEBUG
-	m_bvh.DrawBVH(m_window, currentDepth);
 	/* BVH Visualisation */
+	m_bvh.DrawBVH(m_window, currentDepth);
 	/* Objects Visualisation */
-	for (const auto& go : colliders) {
-		m_window.draw(go);
-	}
-
+	m_window.draw(gameObjectBatch);
 	// Perform search
 	result = m_bvh.SearchBVH(birdObject);
 	//std::cout << "Time taken to search BVH: " << result.searchTime << "ms" << std::endl;
 	//std::cout << "Amount of objects collided: " << result.numberCollidedObjects << std::endl;
 
 	// Set object red if collision occurs
-	if (result.numberCollidedObjects > 0) {
-		birdObject.GetDebugShape().setFillColor({ 255, 0, 0, 255 });
-	}
-	else {
-		birdObject.GetDebugShape().setFillColor({ 255, 255, 255, 255 });
-	}
+	result.numberCollidedObjects > 0 ? birdObject.SetColor({ 255, 0, 0, 255 }) : birdObject.SetColor({ 255, 255, 255, 255 });
 
 	m_window.draw(birdObject);
-#endif
 }
 
 void Application::Close() {

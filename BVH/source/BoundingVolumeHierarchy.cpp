@@ -166,9 +166,9 @@ sf::Vector2i BVH::ChooseSplit(const Node& _currentNode) const
     return {1, static_cast<int>(_currentNode.boundingBox.top) + (static_cast<int>(_currentNode.boundingBox.height) / 2)};
 }
 
-void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider)
+void BVH::GrowBoundingBox(Node& _currentNode, Collider& _collider) const
 {
-    auto& boundingBox = _collider.GetBoundingBox();
+    const auto& boundingBox = _collider.GetBoundingBox();
     if (_currentNode.boundingBox.width <= 0 || _currentNode.boundingBox.height <= 0)
     {
         // We know this node is new.

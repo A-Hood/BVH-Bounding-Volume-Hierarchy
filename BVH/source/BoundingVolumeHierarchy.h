@@ -42,7 +42,7 @@ private:
     // 2.b Create the split
     inline sf::Vector2i ChooseSplit(const Node& _currentNode) const;
     // 3. Calculate the bounds of this new node
-    void GrowBoundingBox(Node& _currentNode, Collider& _collider);
+    void GrowBoundingBox(Node& _currentNode, Collider& _collider) const;
 
     inline void DefineNodeType(Node* _currentNode, bool _nodeIsStatic) {}
 

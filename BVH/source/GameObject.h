@@ -8,32 +8,32 @@ class GameObject : public sf::Drawable
 public:
     GameObject() = default;
     GameObject(sf::FloatRect _rect);
-    ~GameObject() override = default;
+    ~GameObject() = default;
 
 public:
     void Initialise();
+    // Transforms
     void SetPosition(sf::Vector2f _position);
     void IncrementPosition(sf::Vector2f _position);
+    // Size
     void SetSize(sf::Vector2f _size);
+
+    // Color
+    void SetColor(sf::Color _color);
+
+    // Get functions
+    sf::Vector2f GetPosition() const;
+    sf::Vector2f GetSize();
 
     Collider& GetCollider();
 
-#ifndef _BVHDEBUG
-    // Draw only done in release mode to stop abstraction error
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override {}
-#endif
-
-    // DEBUG DRAW
-#ifdef _BVHDEBUG
+    // Debug only
+    sf::VertexArray& GetVertexArray();
     void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
-    sf::RectangleShape& GetDebugShape();
-#endif
 
 private:
     // DEBUG ONLY
-#if _BVHDEBUG
-    sf::RectangleShape m_rectVisual;
-#endif
+    sf::VertexArray m_vertices;
     // Position
     sf::Vector2f m_position;
 
