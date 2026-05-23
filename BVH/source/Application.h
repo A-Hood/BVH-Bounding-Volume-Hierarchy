@@ -41,7 +41,7 @@ private:
 	std::vector<GameObject> colliders;
 	GameObject birdObject;
 	size_t currentDepth = 0;
-	size_t m_numberOfObjects = 100;
+	size_t m_numberOfObjects = 400000;
 };
 
 #endif

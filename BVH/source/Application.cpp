@@ -73,7 +73,7 @@ void Application::Run() {
 }
 
 void Application::Update() {
-	float moveSpeed = 10.0f;
+	float moveSpeed = 4.0f;
 
 	SearchResult result;
 	// Movement
@@ -100,7 +100,7 @@ void Application::Update() {
 	}
 
 	// Perform search
-	//result = m_bvh.SearchBVH(birdObject);
+	result = m_bvh.SearchBVH(birdObject);
 	//std::cout << "Time taken to search BVH: " << result.searchTime << "ms" << std::endl;
 	//std::cout << "Amount of objects collided: " << result.numberCollidedObjects << std::endl;
 
