@@ -1,38 +1,100 @@
 ﻿#include "GameObject.h"
 
-void GameObject::SetPosition(sf::Vector2f _newPosition)
+GameObject::GameObject(sf::FloatRect _rect)
 {
-    m_colliderBox.left = _newPosition.x;
-    m_colliderBox.top = _newPosition.y;
-
-    UpdateDebugVisualBox();
+    Initialise();
+    SetPosition({_rect.left, _rect.top});
+    SetSize({_rect.width, _rect.height});
 }
 
-void GameObject::IncrementPosition(sf::Vector2f _increment)
+void GameObject::Initialise()
 {
-    m_colliderBox.left += _increment.x;
-    m_colliderBox.top += _increment.y;
+    // Init the vertex array
+    m_vertices.setPrimitiveType(sf::Quads);
+    m_vertices.resize(4);
 
-    UpdateDebugVisualBox();
-}
-
-FloatRect& GameObject::GetBoundingBox()
-{
-    return m_colliderBox;
-}
-
-void GameObject::CreateDebugVisualBox()
-{
-    m_rectVisual.setPosition(m_colliderBox.left, m_colliderBox.top);
-    m_rectVisual.setSize({ m_colliderBox.width, m_colliderBox.height });
+    // Create a set of points for the vertex
+    m_vertices[0].position = sf::Vector2f(0, 0);
+    m_vertices[1].position = sf::Vector2f(1, 0);
+    m_vertices[2].position = sf::Vector2f(1, 1);
+    m_vertices[3].position = sf::Vector2f(0, 1);
 
     int rR = rand() % 255;
     int rG = rand() % 255;
     int rB = rand() % 255;
-    m_rectVisual.setFillColor(sf::Color(rR, rG, rB));
+    // Set the colour of the vertex
+    sf::Color color = sf::Color(rR, rG, rB);
+    m_vertices[0].color = color;
+    m_vertices[1].color = color;
+    m_vertices[2].color = color;
+    m_vertices[3].color = color;
 }
 
-void GameObject::UpdateDebugVisualBox()
+void GameObject::SetPosition(const sf::Vector2f _position)
 {
-    m_rectVisual.setPosition(m_colliderBox.left, m_colliderBox.top);
+    m_position = _position;
+    m_collider.SetBoundingBoxPosition(m_position);
+
+    UpdateVertexArray();
+}
+
+void GameObject::IncrementPosition(sf::Vector2f _position)
+{
+    m_position += _position;
+    m_collider.SetBoundingBoxPosition(m_position);
+
+    UpdateVertexArray();
+}
+
+void GameObject::SetSize(const sf::Vector2f _size)
+{
+    m_collider.SetBoundingBoxSize(_size);
+    // Debug only
+    auto& boundingBox = m_collider.GetBoundingBox();
+    m_vertices[0].position = sf::Vector2f(m_position.x, m_position.y);
+    m_vertices[1].position = sf::Vector2f(m_position.x + boundingBox.width, m_position.y);
+    m_vertices[2].position = sf::Vector2f(m_position.x + boundingBox.width, m_position.y + boundingBox.height);
+    m_vertices[3].position = sf::Vector2f(m_position.x, m_position.y + boundingBox.height);
+}
+
+void GameObject::SetColor(sf::Color _color)
+{
+    m_vertices[0].color = _color;
+    m_vertices[1].color = _color;
+    m_vertices[2].color = _color;
+    m_vertices[3].color = _color;
+}
+
+sf::Vector2f GameObject::GetPosition() const
+{
+    return m_position;
+}
+
+sf::Vector2f GameObject::GetSize()
+{
+    return { m_collider.GetBoundingBox().width, m_collider.GetBoundingBox().height };
+}
+
+Collider& GameObject::GetCollider()
+{
+    return m_collider;
+}
+sf::VertexArray& GameObject::GetVertexArray()
+{
+    return m_vertices;
+}
+
+void GameObject::draw(sf::RenderTarget& target, sf::RenderStates states) const
+{
+    target.draw(m_vertices, states);
+}
+
+void GameObject::UpdateVertexArray()
+{
+    // Debug only
+    auto& boundingBox = m_collider.GetBoundingBox();
+    m_vertices[0].position = sf::Vector2f(m_position.x, m_position.y);
+    m_vertices[1].position = sf::Vector2f(m_position.x + boundingBox.width, m_position.y);
+    m_vertices[2].position = sf::Vector2f(m_position.x + boundingBox.width, m_position.y + boundingBox.height);
+    m_vertices[3].position = sf::Vector2f(m_position.x, m_position.y + boundingBox.height);
 }

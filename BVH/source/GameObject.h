@@ -1,33 +1,43 @@
 ﻿#pragma once
-#include <cstdint>
 #include <SFML/Graphics/RectangleShape.hpp>
 
-#include "FloatRect.h"
+#include "Collider.h"
 
-class GameObject
+class GameObject : public sf::Drawable
 {
 public:
     GameObject() = default;
-    ~GameObject() = default;
+    GameObject(sf::FloatRect _rect);
+    ~GameObject() override = default;
 
 public:
-    // --- Transforms ---
-    // ### Position ###
-    void SetPosition(sf::Vector2f _newPosition);
-    void IncrementPosition(sf::Vector2f _increment);
-    // ### Area ###
-    FloatRect& GetBoundingBox();
+    void Initialise();
+    // ### Transforms ###
+    // --- Position ---
+    void SetPosition(sf::Vector2f _position);
+    void IncrementPosition(sf::Vector2f _position);
+    // --- Size ---
+    void SetSize(sf::Vector2f _size);
 
+    // Color
+    void SetColor(sf::Color _color);
+
+    // Get functions
+    sf::Vector2f GetPosition() const;
+    sf::Vector2f GetSize();
+    // --- Collider ---
+    Collider& GetCollider();
+
+    // Debug only
+    sf::VertexArray& GetVertexArray();
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const override;
 private:
-    void CreateDebugVisualBox();
-    void UpdateDebugVisualBox();
-
-
+    void UpdateVertexArray();
 private:
-
     // DEBUG ONLY
-    sf::RectangleShape m_rectVisual;
+    sf::VertexArray m_vertices;
+    // Position
+    sf::Vector2f m_position;
 
-    uint16_t m_id;
-    FloatRect m_colliderBox;
+    Collider m_collider;
 };

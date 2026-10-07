@@ -4,10 +4,12 @@
 #include <vector>
 #include "Node.h"
 
+#include "GameObject.h"
+
 struct SearchResult {
-    // DEBUG
     float searchTime = 0;
-    size_t numberCollidedObjects = 0;
+    // Collided objects with the subject
+    std::vector<Collider*> m_collidedObjectsQueue;
 };
 
 class BVH
@@ -18,52 +20,47 @@ public:
     BVH(size_t _maxDepth);
     ~BVH();
 public:
-    // --- Add colliders to the bvh ---
-    void AddCollider(GameObject* _collider);
+    // --- Get reference to the colliders ---
+    void AddCollider(Collider* _collider);
     // --- Create BVH ---
     void Generate();
     // --- Search ---
-    SearchResult SearchBVH(const FloatRect& _targetRect);
+    SearchResult SearchForCollision(GameObject& _targetObject);
 
     // --- DEBUG ---
     Node* GetMasterNode() const;
-    void DrawBVH(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const;
+    void Draw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const;
 private:
     // --- Collision (should not be here but for this demo its fine) ---
-    bool AABBCollision(const FloatRect& _boxA, const FloatRect& _boxB) const;
+    bool AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) const;
 
     // --- Generate BVH function steps ---
     // 1. Create a new node
     void CreateNewNode(Node* currentNode, size_t currentDepth);
     // 2. Calculate the bounds of this new node
-    FloatRect CalculateNodeBoundingBox(const std::vector<Collider*>& nodeVector) const;
+    Collider CalculateNodeBoundingBox(const std::vector<Collider*>& nodeVector) const;
     // Finds the longest side of the bounding box
-    [[nodiscard]] inline bool IsXLongestSide(const FloatRect& boundingBox) const;
+    [[nodiscard]] inline bool IsXLongestSide(const sf::FloatRect& boundingBox) const;
 	// Objects are moved to either childA or childB
     void AssignObjectSide(std::vector<Collider*>& leftSide,
 	    std::vector<Collider*>& rightSide,
 	    Node* currentNode,
 	    float boundaryMidpoint);
 
-    inline void DefineNodeType(Node* _currentNode, bool _nodeIsStatic);
-
     // --- Destroy BVH ---
     void TraversalNodeDestroy(const Node* _currentNode);
 
     // --- Internal search ---
-    void RecursiveSearch(const FloatRect& _searchRect, const Node* _currentNode);
+    void RecursiveSearch(Collider& _targetObject, const Node* _currentNode);
 
     // --- Dynamic BVH ---
-    void RecalculateBounds(Node* currentNode);
+    //void RecalculateBounds(Node* currentNode);
 private:
+    SearchResult m_recursiveSearch;
+    // Hold the colliders used in the BVH
     std::vector<Collider*> m_colliders;
     // Keep track of the master node
     Node* m_masterNode = nullptr;
-    // Collided objects with the subject
-    std::vector<Collider*> m_collidedObjectsQueue;
-
-    // Dynamic nodes that need to be updated if the objects inside the leaf nodes move
-	std::vector<Node*> m_dynamicNodeQueue;
 
     // Parameters
     size_t m_maximumDepth = 50;
