@@ -3,7 +3,8 @@
 
 struct FloatRect {
 	FloatRect() = default;
-	FloatRect(float _left, float _top, float _width, float _height) {
+	FloatRect(float _left, float _top, float _width, float _height)
+	{
 		left = _left;
 		top = _top;
 		width = _width;

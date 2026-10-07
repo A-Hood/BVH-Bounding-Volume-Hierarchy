@@ -19,7 +19,7 @@ public:
     ~BVH();
 public:
     // --- Add colliders to the bvh ---
-    void AddCollider(Collider* _collider);
+    void AddCollider(GameObject* _collider);
     // --- Create BVH ---
     void Generate();
     // --- Search ---

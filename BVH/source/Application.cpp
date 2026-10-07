@@ -11,10 +11,12 @@ void Application::CreateApplication() {
 	// Generate random colliders (DEBUG)
 	for (size_t x = 0; x < m_numberOfObjects; x++)
 	{
-		int randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
-		int randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
+		float randomX = RandomGen(10, APP_SETTINGS.SCREEN_WIDTH - 74);
+		float randomY = RandomGen(10, APP_SETTINGS.SCREEN_HEIGHT - 74);
 
-		colliders.emplace_back(x, FloatRect(randomX, randomY, 64, 64), false);
+		GameObject newObject;
+		newObject.SetPosition({randomX, randomY});
+		m_gameObjects.emplace_back(std::move(newObject));
 	}
 
 	// Great example of how using SAH is more efficient than slicing the longest node axis
@@ -27,8 +29,8 @@ void Application::CreateApplication() {
 	//colliders.emplace_back(6, FloatRect(825, 420, 64, 64));
 
 	// Set-up BVH
-	for (Collider& col : colliders) {
-		m_bvh.AddCollider(&col);
+	for (GameObject& obj : m_gameObjects) {
+		m_bvh.AddCollider(&obj);
 	}
 	m_bvh.Generate();
 }
