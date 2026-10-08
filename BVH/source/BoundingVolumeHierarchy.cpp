@@ -101,16 +101,15 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth)
 	currentNode->m_currentDepth = currentDepth;
 #endif
 
+	// Calculate the bounding box
+	Collider nodeBoundingBox = CalculateNodeBoundingBox(currentNode->m_nodeColliders);
+	currentNode->m_boundingBox = nodeBoundingBox.GetBoundingBox();
 	// Return if the number of game objects is m_maxObjectsInLeafNode or less
 	// And it has reached the maximum depth
 	if (currentNode->m_nodeColliders.size() <= m_maxObjectsInLeafNode || currentDepth >= m_maximumDepth)
 	{
 		return;
 	}
-	// Calculate the bounding box
-	Collider nodeBoundingBox = CalculateNodeBoundingBox(currentNode->m_nodeColliders);
-	currentNode->m_boundingBox = nodeBoundingBox.GetBoundingBox();
-
 
 	// Create child nodes
 	Node* childA = new Node();
@@ -124,8 +123,11 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth)
 	currentNode->m_childB->m_parentNode = currentNode;
 
 	// Get the vectors from each child node
-	auto& leftSide = currentNode->m_childA->m_nodeColliders;
-	auto& rightSide = currentNode->m_childB->m_nodeColliders;
+	//auto& leftSide = currentNode->m_childA->m_nodeColliders;
+	//auto& rightSide = currentNode->m_childB->m_nodeColliders;
+
+	std::vector<Collider*> leftSide;
+	std::vector<Collider*> rightSide;
 	// Reserve space to increase performance
 	size_t reserveSize = currentNode->m_nodeColliders.size() / 2;
 	leftSide.reserve(reserveSize);
@@ -141,7 +143,13 @@ void BVH::CreateNewNode(Node* currentNode, size_t currentDepth)
 	{
 		boundaryMidpoint = currentNode->m_boundingBox.top + (currentNode->m_boundingBox.height / 2);
 	}
+
+	// TODO: We can grow the bounding box then check which side the box is on
 	AssignObjectSide(leftSide, rightSide, currentNode, boundaryMidpoint);
+
+	// Assign gameobjects to the nodes
+	currentNode->m_childA->m_nodeColliders = leftSide;
+	currentNode->m_childB->m_nodeColliders = rightSide;
 
 	CreateNewNode(currentNode->m_childA, currentDepth + 1);
 	CreateNewNode(currentNode->m_childB, currentDepth + 1);
