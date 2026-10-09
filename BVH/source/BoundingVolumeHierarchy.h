@@ -36,16 +36,15 @@ private:
 
     // --- Generate BVH function steps ---
     // 1. Create a new node
-    void CreateNewNode(Node* currentNode, size_t currentDepth);
-    // 2. Calculate the bounds of this new node
-    Collider CalculateNodeBoundingBox(const std::vector<Collider*>& nodeVector) const;
-    // Finds the longest side of the bounding box
-    [[nodiscard]] inline bool IsXLongestSide(const sf::FloatRect& boundingBox) const;
-	// Objects are moved to either childA or childB
-    void AssignObjectSide(std::vector<Collider*>& leftSide,
-	    std::vector<Collider*>& rightSide,
-	    Node* currentNode,
-	    float boundaryMidpoint);
+    void CreateNewNode(Node* _currentNode, size_t _currentDepth);
+    // 2.a Return true if X is the longest side, false is y is
+    [[nodiscard]] inline bool IsXLongestSide(const Node* _currentNode) const;
+    // 2.b Choose the split of the current node
+    sf::Vector2i ChooseSplit(const Node* _currentNode);
+    // 3. Grow the node bounding box based on the current collider
+    void GrowBoundingBox(Node* _currentNode, Collider* _collider);
+
+
 
     // --- Destroy BVH ---
     void TraversalNodeDestroy(const Node* _currentNode);

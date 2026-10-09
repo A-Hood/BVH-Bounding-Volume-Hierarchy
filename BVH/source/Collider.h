@@ -10,11 +10,13 @@ public:
 public:
     // Creation
     void CreateBoundingBox(sf::Vector2f _position, sf::Vector2f _size);
+
+    // ### Transforms ###
     void SetBoundingBoxPosition(sf::Vector2f _position);
     void SetBoundingBoxSize(sf::Vector2f _size);
 
     const sf::FloatRect& GetBoundingBox() const;
-
+    int GetCentreFromAxis(int _splitAxis) const;
 
 private:
     sf::FloatRect m_boundingBox;

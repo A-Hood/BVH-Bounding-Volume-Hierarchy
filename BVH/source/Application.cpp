@@ -3,7 +3,9 @@
 #include <chrono>
 #include "Random.h"
 
-void Application::CreateApplication() {
+
+void Application::CreateApplication()
+{
 	m_window.create(sf::VideoMode({ APP_SETTINGS.SCREEN_WIDTH, APP_SETTINGS.SCREEN_HEIGHT }), APP_SETTINGS.APPLICATION_NAME);
 	m_window.setKeyRepeatEnabled(false);
 	m_window.setFramerateLimit(60);

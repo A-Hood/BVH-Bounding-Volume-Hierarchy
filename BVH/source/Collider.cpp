@@ -24,3 +24,10 @@ const sf::FloatRect& Collider::GetBoundingBox() const
 {
     return m_boundingBox;
 }
+
+int Collider::GetCentreFromAxis(const int _splitAxis) const
+{
+    return _splitAxis == 0 ?
+        static_cast<int>(m_boundingBox.left) + static_cast<int>(m_boundingBox.width / 2) :
+        static_cast<int>(m_boundingBox.top) + static_cast<int>(m_boundingBox.height / 2);
+}
