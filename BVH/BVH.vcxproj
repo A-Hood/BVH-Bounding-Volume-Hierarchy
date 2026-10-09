@@ -142,6 +142,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="source\AbstractBVH.cpp" />
     <ClCompile Include="source\Application.cpp" />
     <ClCompile Include="source\BoundingVolumeHierarchy.cpp" />
     <ClCompile Include="source\Collider.cpp" />
@@ -150,10 +151,12 @@
     <ClCompile Include="source\Node.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="source\AbstractBVH.h" />
     <ClInclude Include="source\Application.h" />
     <ClInclude Include="source\BoundingVolumeHierarchy.h" />
     <ClInclude Include="source\Collider.h" />
     <ClInclude Include="source\GameObject.h" />
+    <ClInclude Include="source\IBVH.h" />
     <ClInclude Include="source\Node.h" />
     <ClInclude Include="source\Random.h" />
   </ItemGroup>
