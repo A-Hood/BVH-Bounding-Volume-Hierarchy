@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "Application.h"
+#include "Node.h"
 
 BVHIterationTwo::~BVHIterationTwo()
 {
@@ -39,37 +40,12 @@ void BVHIterationTwo::Generate()
 	std::cout << "Time to create BVH: " << std::to_string(time.count()) << "ms\n";
 }
 
+void BVHIterationTwo::Draw(sf::RenderTarget& _target, size_t _currentDepth)
+{
+	RecursiveDraw(_target, m_masterNode, _currentDepth);
+}
+
 // DEBUG ONLY
-Node* BVHIterationTwo::GetMasterNode() const
-{
-	return m_masterNode;
-}
-
-void BVHIterationTwo::Draw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const
-{
-#if _BVHDEBUG
-	if (_currentDepth == 0 || _currentDepth == _currentNode->m_currentDepth)
-	{
-		sf::RectangleShape debugRect;
-		debugRect.setPosition(_currentNode->m_boundingBox.left, _currentNode->m_boundingBox.top);
-		debugRect.setSize({_currentNode->m_boundingBox.width, _currentNode->m_boundingBox.height});
-		debugRect.setOutlineColor(sf::Color::Red);
-		debugRect.setOutlineThickness(3);
-		debugRect.setFillColor(sf::Color(0, 0, 0, 0));
-
-		_target.draw(debugRect);
-	}
-
-	if (_currentNode->m_childA != nullptr)
-	{
-		Draw(_target, _currentNode->m_childA, _currentDepth);
-	}
-	if (_currentNode->m_childB != nullptr)
-	{
-		Draw(_target, _currentNode->m_childB, _currentDepth);
-	}
-#endif
-}
 
 // --- Private functions ---------------------------------------------------------------------------------
 
@@ -178,6 +154,32 @@ void BVHIterationTwo::GrowBoundingBox(Node* _currentNode, Collider* _collider)
 	// Height
 	const float height = (boundingBox.top + boundingBox.height) - _currentNode->m_boundingBox.top;
 	_currentNode->m_boundingBox.height = std::max(_currentNode->m_boundingBox.height, height);
+}
+
+void BVHIterationTwo::RecursiveDraw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth)
+{
+#if _BVHDEBUG
+	if (_currentDepth == 0 || _currentDepth == _currentNode->m_currentDepth)
+	{
+		sf::RectangleShape debugRect;
+		debugRect.setPosition(_currentNode->m_boundingBox.left, _currentNode->m_boundingBox.top);
+		debugRect.setSize({_currentNode->m_boundingBox.width, _currentNode->m_boundingBox.height});
+		debugRect.setOutlineColor(sf::Color::Red);
+		debugRect.setOutlineThickness(3);
+		debugRect.setFillColor(sf::Color(0, 0, 0, 0));
+
+		_target.draw(debugRect);
+	}
+
+	if (_currentNode->m_childA != nullptr)
+	{
+		RecursiveDraw(_target, _currentNode->m_childA, _currentDepth);
+	}
+	if (_currentNode->m_childB != nullptr)
+	{
+		RecursiveDraw(_target, _currentNode->m_childB, _currentDepth);
+	}
+#endif
 }
 
 void BVHIterationTwo::TraversalNodeDestroy(const Node* _currentNode)

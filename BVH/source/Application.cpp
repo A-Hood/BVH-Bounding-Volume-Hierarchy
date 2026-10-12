@@ -1,8 +1,17 @@
 #include "Application.h"
 
 #include <chrono>
+
+#include "BVHIterationOne.h"
 #include "Random.h"
 
+
+Application::Application() :
+m_iterationOne(),
+m_iterationTwo()
+{
+
+}
 
 void Application::CreateApplication()
 {
@@ -51,9 +60,9 @@ void Application::CreateApplication()
 	// Set-up BVH
 	for (auto& collider : m_gameObjects)
 	{
-		m_bvh.AddCollider(&collider.GetCollider());
+		m_iterationOne.AddCollider(&collider.GetCollider());
 	}
-	m_bvh.Generate();
+	m_iterationOne.Generate();
 }
 
 void Application::Run()
@@ -112,7 +121,7 @@ void Application::Update()
 	//}
 	m_window.draw(m_gameObjectBatch);
 	/* BVH Visualisation */
-	m_bvh.Draw(m_window, m_bvh.GetMasterNode(), m_currentDepth);
+	m_iterationOne.Draw(m_window, m_currentDepth);
 
 	// Perform search
 	//result = m_bvh.SearchBVH(birdObject);

@@ -4,6 +4,7 @@
 #include <chrono>
 #include <iostream>
 
+#include "Node.h"
 #include "Application.h"
 
 BVHIterationOne::~BVHIterationOne()
@@ -27,10 +28,6 @@ void BVHIterationOne::Generate()
 	// Creates the master node
 	m_masterNode = new Node();
 	m_masterNode->m_nodeColliders = m_colliders;
-	for (auto collider : m_masterNode->m_nodeColliders)
-	{
-		GrowBoundingBox(m_masterNode, collider);
-	}
 	// Start the recursion
 	CreateNewNode(m_masterNode, 1);
 
@@ -40,35 +37,9 @@ void BVHIterationOne::Generate()
 }
 
 // DEBUG ONLY
-Node* BVHIterationOne::GetMasterNode() const
+void BVHIterationOne::Draw(sf::RenderTarget& _target, size_t _currentDepth)
 {
-	return m_masterNode;
-}
-
-void BVHIterationOne::Draw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const
-{
-#if _BVHDEBUG
-	if (_currentDepth == 0 || _currentDepth == _currentNode->m_currentDepth)
-	{
-		sf::RectangleShape debugRect;
-		debugRect.setPosition(_currentNode->m_boundingBox.left, _currentNode->m_boundingBox.top);
-		debugRect.setSize({_currentNode->m_boundingBox.width, _currentNode->m_boundingBox.height});
-		debugRect.setOutlineColor(sf::Color::Red);
-		debugRect.setOutlineThickness(3);
-		debugRect.setFillColor(sf::Color(0, 0, 0, 0));
-
-		_target.draw(debugRect);
-	}
-
-	if (_currentNode->m_childA != nullptr)
-	{
-		Draw(_target, _currentNode->m_childA, _currentDepth);
-	}
-	if (_currentNode->m_childB != nullptr)
-	{
-		Draw(_target, _currentNode->m_childB, _currentDepth);
-	}
-#endif
+	RecursiveDraw(_target, m_masterNode, _currentDepth);
 }
 
 // --- Private functions ---------------------------------------------------------------------------------
@@ -86,10 +57,6 @@ void BVHIterationOne::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 	{
 		return;
 	}
-	// Split the current node bounding box
-	sf::Vector2i result = ChooseSplit(_currentNode);
-	const int splitAxis = result.x;
-	const int splitPosition = result.y;
 
 	// Create child nodes
 	Node* childA = new Node();
@@ -99,18 +66,29 @@ void BVHIterationOne::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 	childA->m_parentNode = _currentNode;
 	childB->m_parentNode = _currentNode;
 
-	// Go through each collider of the current node
-	for (auto collider : _currentNode->m_nodeColliders)
-	{
-		// Find if the box is on side A, if not then its on side B
-		const bool isSideA = collider->GetCentreFromAxis(splitAxis) < splitPosition;
-		Node* currentChild = isSideA ? childA : childB;
-		GrowBoundingBox(currentChild, collider);
+	// Get the vectors from each child node
+	auto& leftSide = childA->m_nodeColliders;
+	auto& rightSide = childB->m_nodeColliders;
 
-		// Add collider to the current child
-		currentChild->m_nodeColliders.emplace_back(collider);
+	// Reserve space to increase performance
+	size_t reserveSize = _currentNode->m_nodeColliders.size() / 2;
+	leftSide.reserve(reserveSize);
+	rightSide.reserve(reserveSize);
+
+	// Yeah not ideal
+	float boundaryMidpoint;		// Can represent either on the x or the y
+	if (IsXLongestSide(_currentNode))
+	{
+		boundaryMidpoint = _currentNode->m_boundingBox.left + (_currentNode->m_boundingBox.width / 2);
 	}
-	// Assign nodes to the parent node
+	else
+	{
+		boundaryMidpoint = _currentNode->m_boundingBox.top + (_currentNode->m_boundingBox.height / 2);
+	}
+
+	// TODO: We can grow the bounding box then check which side the box is on
+	AssignObjectSide(leftSide, rightSide, _currentNode, boundaryMidpoint);
+
 	_currentNode->m_childB = childB;
 	_currentNode->m_childA = childA;
 
@@ -123,61 +101,56 @@ bool BVHIterationOne::IsXLongestSide(const Node* _currentNode) const
 	return _currentNode->m_boundingBox.width > _currentNode->m_boundingBox.height;
 }
 
-sf::Vector2i BVHIterationOne::ChooseSplit(const Node* _currentNode)
+void BVHIterationOne::AssignObjectSide(std::vector<Collider*>& leftSide, std::vector<Collider*>& rightSide, Node* _currentNode, float boundaryMidpoint) const
 {
-	// X returns the splitAxis
-	// Y returns the splitPosition
-	if (IsXLongestSide(_currentNode))
+	float objectMidpoint;
+	for (const auto object : _currentNode->m_nodeColliders)
 	{
-		// X is the longest
-		return {0, static_cast<int>(_currentNode->m_boundingBox.left) + (static_cast<int>(_currentNode->m_boundingBox.width) / 2)};
+		// Calculate the midpoint of the object
+		if (IsXLongestSide(_currentNode))
+		{
+			objectMidpoint = object->GetBoundingBox().left + (object->GetBoundingBox().width / 2);
+		}
+		else
+		{
+			objectMidpoint = object->GetBoundingBox().top + (object->GetBoundingBox().height / 2);
+		}
+
+		if (objectMidpoint < boundaryMidpoint) {
+			// Object is moved to the left side
+			leftSide.emplace_back(object);
+		}
+		else {
+			// Object is moved to the right side
+			rightSide.emplace_back(object);
+		}
 	}
-	return {1, static_cast<int>(_currentNode->m_boundingBox.top) + (static_cast<int>(_currentNode->m_boundingBox.height) / 2)};
 }
 
-void BVHIterationOne::GrowBoundingBox(Node* _currentNode, Collider* _collider)
+void BVHIterationOne::RecursiveDraw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth)
 {
-	const auto& boundingBox = _collider->GetBoundingBox();
-	if (_currentNode->m_boundingBox.width <= 0 || _currentNode->m_boundingBox.height <= 0)
+#if _BVHDEBUG
+	if (_currentDepth == 0 || _currentDepth == _currentNode->m_currentDepth)
 	{
-		// We know this node is new.
-		// Therefore, we must set the position and size to the current collider
-		// Return after
-		_currentNode->m_boundingBox.left = boundingBox.left;
-		_currentNode->m_boundingBox.top = boundingBox.top;
-		_currentNode->m_boundingBox.width = boundingBox.width;
-		_currentNode->m_boundingBox.height = boundingBox.height;
-		return;
-	}
-	// Left
-	if (_currentNode->m_boundingBox.left > boundingBox.left)
-	{
-		// Update the width
-		if (_currentNode->m_boundingBox.width > 0)
-		{
-			_currentNode->m_boundingBox.width += (_currentNode->m_boundingBox.left - boundingBox.left);
-		}
-		// Update the node BB left
-		_currentNode->m_boundingBox.left = boundingBox.left;
-	}
-	// Top
-	if (_currentNode->m_boundingBox.top > boundingBox.top)
-	{
-		// Update the height
-		if (_currentNode->m_boundingBox.height > 0)
-		{
-			_currentNode->m_boundingBox.height += (_currentNode->m_boundingBox.top - boundingBox.top);
-		}
-		// Update the node BB left
-		_currentNode->m_boundingBox.top = boundingBox.top;
+		sf::RectangleShape debugRect;
+		debugRect.setPosition(_currentNode->m_boundingBox.left, _currentNode->m_boundingBox.top);
+		debugRect.setSize({_currentNode->m_boundingBox.width, _currentNode->m_boundingBox.height});
+		debugRect.setOutlineColor(sf::Color::Red);
+		debugRect.setOutlineThickness(3);
+		debugRect.setFillColor(sf::Color(0, 0, 0, 0));
+
+		_target.draw(debugRect);
 	}
 
-	// Width
-	const float width = (boundingBox.left + boundingBox.width) - _currentNode->m_boundingBox.left;
-	_currentNode->m_boundingBox.width = std::max(_currentNode->m_boundingBox.width, width);
-	// Height
-	const float height = (boundingBox.top + boundingBox.height) - _currentNode->m_boundingBox.top;
-	_currentNode->m_boundingBox.height = std::max(_currentNode->m_boundingBox.height, height);
+	if (_currentNode->m_childA != nullptr)
+	{
+		RecursiveDraw(_target, _currentNode->m_childA, _currentDepth);
+	}
+	if (_currentNode->m_childB != nullptr)
+	{
+		RecursiveDraw(_target, _currentNode->m_childB, _currentDepth);
+	}
+#endif
 }
 
 void BVHIterationOne::TraversalNodeDestroy(const Node* _currentNode)

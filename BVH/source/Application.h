@@ -7,7 +7,8 @@
 // SFML
 #include <SFML/Graphics.hpp>
 
-#include "BoundingVolumeHierarchy.h"
+#include "BVHIterationOne.h"
+#include "BVHIterationTwo.h"
 #include "GameObject.h"
 
 #define LOG(x) std::cout << x << std::endl;
@@ -22,7 +23,7 @@ class Application {
 		const char* APPLICATION_NAME = "BVH Visualisation";
 	};
 public:
-	Application() : m_bvh() {}
+	Application();
 	~Application() = default;
 
 public:
@@ -36,8 +37,9 @@ private:
 	APPLICATION_SETTINGS APP_SETTINGS;
 	sf::RenderWindow m_window;
 
-	// BVH
-	BVH m_bvh;
+	// BVH versions
+	BVHIterationOne m_iterationOne;
+	BVHIterationTwo m_iterationTwo;
 
 	// Objects
 	std::vector<GameObject> m_gameObjects;

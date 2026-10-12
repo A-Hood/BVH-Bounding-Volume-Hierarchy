@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "AbstractBVH.h"
 
-class BVHIterationTwo : AbstractBVH
+class BVHIterationTwo : public AbstractBVH
 {
 public:
     // Constructor / Destructor
@@ -14,8 +14,7 @@ public:
     void Generate() override;
 
     // --- DEBUG ---
-    Node* GetMasterNode() const;
-    void Draw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth) const;
+    void Draw(sf::RenderTarget& _target, size_t _currentDepth) override;
 private:
     // --- Generate BVH function steps ---
     // 1. Create a new node
@@ -26,6 +25,9 @@ private:
     sf::Vector2i ChooseSplit(const Node* _currentNode);
     // 3. Grow the node bounding box based on the current collider
     void GrowBoundingBox(Node* _currentNode, Collider* _collider);
+    // DEBUG ONLY
+    // 4. Draw BVH
+    void RecursiveDraw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth);
 
     // --- Destroy BVH ---
     void TraversalNodeDestroy(const Node* _currentNode);

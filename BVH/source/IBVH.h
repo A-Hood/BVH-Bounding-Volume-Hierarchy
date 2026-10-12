@@ -20,6 +20,7 @@ public:
 public:
     virtual void Generate() = 0;
     virtual SearchResult SearchForCollision(GameObject& _targetObject) = 0;
+    virtual void Draw(sf::RenderTarget& _target, size_t _currentDepth) = 0;
 
 protected:
     // --- Collision (should not be here but for this demo its fine) ---
