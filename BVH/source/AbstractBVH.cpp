@@ -4,7 +4,7 @@
 
 #include "Collider.h"
 #include "GameObject.h"
-#include "Node.h"
+#include "NodePointer.h"
 
 AbstractBVH::AbstractBVH(size_t _maxDepth, size_t _maxObjectsInLeafNode)
 {
@@ -37,7 +37,7 @@ bool AbstractBVH::AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect&
         _boxA.top + _boxA.height >= _boxB.top;
 }
 
-void AbstractBVH::RecursiveSearch(Collider& _targetObject, const Node* _currentNode)
+void AbstractBVH::RecursiveSearch(Collider& _targetObject, const NodePointer* _currentNode)
 {
     // If the searchRect is not within this current node, do not proceed
     if (!AABBCollision(_targetObject.GetBoundingBox(), _currentNode->m_boundingBox))

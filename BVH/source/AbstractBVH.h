@@ -14,7 +14,7 @@ public:
 protected:
     bool AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) const override;
 
-    void RecursiveSearch(Collider& _targetObject, const Node* _currentNode) override;
+    void RecursiveSearch(Collider& _targetObject, const NodePointer* _currentNode) override;
 protected:
     SearchResult m_recursiveSearch;
     // Parameters
@@ -24,5 +24,5 @@ protected:
     const char* m_bvhName;
 
     // Keep track of the master node
-    Node* m_masterNode = nullptr;
+    NodePointer* m_masterNode = nullptr;
 };

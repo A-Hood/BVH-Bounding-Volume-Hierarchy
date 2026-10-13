@@ -4,7 +4,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "Node.h"
+#include "NodePointer.h"
 #include "Application.h"
 
 BVHIterationOne::~BVHIterationOne()
@@ -24,7 +24,7 @@ void BVHIterationOne::AddCollider(Collider* _collider)
 void BVHIterationOne::Generate()
 {
 	// Creates the master node
-	m_masterNode = new Node();
+	m_masterNode = new NodePointer();
 	m_masterNode->m_nodeColliders = m_colliders;
 	// Start the recursion
 	CreateNewNode(m_masterNode, 1);
@@ -38,7 +38,7 @@ void BVHIterationOne::Draw(sf::RenderTarget& _target, size_t _currentDepth)
 
 // --- Private functions ---------------------------------------------------------------------------------
 
-void BVHIterationOne::CreateNewNode(Node* _currentNode, size_t _currentDepth)
+void BVHIterationOne::CreateNewNode(NodePointer* _currentNode, size_t _currentDepth)
 {
 #if _BVHDEBUG
 	// DEBUG
@@ -56,8 +56,8 @@ void BVHIterationOne::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 	}
 
 	// Create child nodes
-	Node* childA = new Node();
-	Node* childB = new Node();
+	NodePointer* childA = new NodePointer();
+	NodePointer* childB = new NodePointer();
 
 	// Define parents
 	childA->m_parentNode = _currentNode;
@@ -129,12 +129,12 @@ Collider BVHIterationOne::CalculateNodeBoundingBox(const std::vector<Collider*>&
 	return nodeBoundingBox;
 }
 
-bool BVHIterationOne::IsXLongestSide(const Node* _currentNode) const
+bool BVHIterationOne::IsXLongestSide(const NodePointer* _currentNode) const
 {
 	return _currentNode->m_boundingBox.width > _currentNode->m_boundingBox.height;
 }
 
-void BVHIterationOne::AssignObjectSide(std::vector<Collider*>& leftSide, std::vector<Collider*>& rightSide, Node* _currentNode, float boundaryMidpoint) const
+void BVHIterationOne::AssignObjectSide(std::vector<Collider*>& leftSide, std::vector<Collider*>& rightSide, NodePointer* _currentNode, float boundaryMidpoint) const
 {
 	float objectMidpoint;
 	for (const auto object : _currentNode->m_nodeColliders)
@@ -160,7 +160,7 @@ void BVHIterationOne::AssignObjectSide(std::vector<Collider*>& leftSide, std::ve
 	}
 }
 
-void BVHIterationOne::RecursiveDraw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth)
+void BVHIterationOne::RecursiveDraw(sf::RenderTarget& _target, NodePointer* _currentNode, size_t _currentDepth)
 {
 #if _BVHDEBUG
 	if (_currentDepth == 0 || _currentDepth == _currentNode->m_currentDepth)
@@ -186,7 +186,7 @@ void BVHIterationOne::RecursiveDraw(sf::RenderTarget& _target, Node* _currentNod
 #endif
 }
 
-void BVHIterationOne::TraversalNodeDestroy(const Node* _currentNode)
+void BVHIterationOne::TraversalNodeDestroy(const NodePointer* _currentNode)
 {
 	if (_currentNode->m_childA != nullptr)
 	{
@@ -199,7 +199,7 @@ void BVHIterationOne::TraversalNodeDestroy(const Node* _currentNode)
 	// We are at a leaf node
 	delete _currentNode;
 }
-//void BVHIterationOne::RecalculateBounds(Node* currentNode) {
+//void BVHIterationOne::RecalculateBounds(NodePointer* currentNode) {
 //	FloatRect boundingBox = CalculateNodeBoundingBox(currentNode->m_colliders);
 //	currentNode->DefineBounds(boundingBox);
 //

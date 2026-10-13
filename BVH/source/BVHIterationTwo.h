@@ -18,22 +18,22 @@ public:
 private:
     // --- Generate BVH function steps ---
     // 1. Create a new node
-    void CreateNewNode(Node* _currentNode, size_t _currentDepth);
+    void CreateNewNode(NodePointer* _currentNode, size_t _currentDepth);
     // 2.a Return true if X is the longest side, false is y is
-    [[nodiscard]] inline bool IsXLongestSide(const Node* _currentNode) const;
+    [[nodiscard]] inline bool IsXLongestSide(const NodePointer* _currentNode) const;
     // 2.b Choose the split of the current node
-    sf::Vector2i ChooseSplit(const Node* _currentNode);
+    sf::Vector2i ChooseSplit(const NodePointer* _currentNode);
     // 3. Grow the node bounding box based on the current collider
-    void GrowBoundingBox(Node* _currentNode, Collider* _collider);
+    void GrowBoundingBox(NodePointer* _currentNode, Collider* _collider);
     // DEBUG ONLY
     // 4. Draw BVH
-    void RecursiveDraw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth);
+    void RecursiveDraw(sf::RenderTarget& _target, NodePointer* _currentNode, size_t _currentDepth);
 
     // --- Destroy BVH ---
-    void TraversalNodeDestroy(const Node* _currentNode);
+    void TraversalNodeDestroy(const NodePointer* _currentNode);
 
     // --- Dynamic BVH ---
-    //void RecalculateBounds(Node* currentNode);
+    //void RecalculateBounds(NodePointer* currentNode);
 private:
     // Hold the colliders used in the BVH
     std::vector<Collider*> m_colliders;

@@ -144,22 +144,24 @@
   <ItemGroup>
     <ClCompile Include="source\AbstractBVH.cpp" />
     <ClCompile Include="source\Application.cpp" />
+    <ClCompile Include="source\BVHCacheLocality.cpp" />
     <ClCompile Include="source\BVHIterationOne.cpp" />
     <ClCompile Include="source\BVHIterationTwo.cpp" />
     <ClCompile Include="source\Collider.cpp" />
     <ClCompile Include="source\GameObject.cpp" />
     <ClCompile Include="source\main.cpp" />
-    <ClCompile Include="source\Node.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\AbstractBVH.h" />
     <ClInclude Include="source\Application.h" />
+    <ClInclude Include="source\BVHCacheLocality.h" />
     <ClInclude Include="source\BVHIterationOne.h" />
     <ClInclude Include="source\BVHIterationTwo.h" />
     <ClInclude Include="source\Collider.h" />
     <ClInclude Include="source\GameObject.h" />
     <ClInclude Include="source\IBVH.h" />
-    <ClInclude Include="source\Node.h" />
+    <ClInclude Include="source\NodeInt.h" />
+    <ClInclude Include="source\NodePointer.h" />
     <ClInclude Include="source\Random.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

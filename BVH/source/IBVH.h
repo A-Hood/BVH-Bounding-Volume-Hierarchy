@@ -2,7 +2,7 @@
 #include <vector>
 #include <SFML/Graphics/RenderTarget.hpp>
 
-struct Node;
+struct NodePointer;
 class GameObject;
 class Collider;
 
@@ -28,5 +28,5 @@ protected:
     virtual bool AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) const = 0;
 
     // --- Internal search ---
-    virtual void RecursiveSearch(Collider& _targetObject, const Node* _currentNode) = 0;
+    virtual void RecursiveSearch(Collider& _targetObject, const NodePointer* _currentNode) = 0;
 };

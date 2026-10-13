@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "Application.h"
-#include "Node.h"
+#include "NodePointer.h"
 
 BVHIterationTwo::~BVHIterationTwo()
 {
@@ -24,7 +24,7 @@ void BVHIterationTwo::AddCollider(Collider* _collider)
 void BVHIterationTwo::Generate()
 {
 	// Creates the master node
-	m_masterNode = new Node();
+	m_masterNode = new NodePointer();
 	m_masterNode->m_nodeColliders = m_colliders;
 	for (auto collider : m_masterNode->m_nodeColliders)
 	{
@@ -43,7 +43,7 @@ void BVHIterationTwo::Draw(sf::RenderTarget& _target, size_t _currentDepth)
 
 // --- Private functions ---------------------------------------------------------------------------------
 
-void BVHIterationTwo::CreateNewNode(Node* _currentNode, size_t _currentDepth)
+void BVHIterationTwo::CreateNewNode(NodePointer* _currentNode, size_t _currentDepth)
 {
 #if _BVHDEBUG
 	// DEBUG
@@ -62,8 +62,8 @@ void BVHIterationTwo::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 	const int splitPosition = result.y;
 
 	// Create child nodes
-	Node* childA = new Node();
-	Node* childB = new Node();
+	NodePointer* childA = new NodePointer();
+	NodePointer* childB = new NodePointer();
 
 	// Define parents
 	childA->m_parentNode = _currentNode;
@@ -74,7 +74,7 @@ void BVHIterationTwo::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 	{
 		// Find if the box is on side A, if not then its on side B
 		const bool isSideA = collider->GetCentreFromAxis(splitAxis) < splitPosition;
-		Node* currentChild = isSideA ? childA : childB;
+		NodePointer* currentChild = isSideA ? childA : childB;
 		GrowBoundingBox(currentChild, collider);
 
 		// Add collider to the current child
@@ -88,12 +88,12 @@ void BVHIterationTwo::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 	CreateNewNode(_currentNode->m_childB, _currentDepth + 1);
 }
 
-bool BVHIterationTwo::IsXLongestSide(const Node* _currentNode) const
+bool BVHIterationTwo::IsXLongestSide(const NodePointer* _currentNode) const
 {
 	return _currentNode->m_boundingBox.width > _currentNode->m_boundingBox.height;
 }
 
-sf::Vector2i BVHIterationTwo::ChooseSplit(const Node* _currentNode)
+sf::Vector2i BVHIterationTwo::ChooseSplit(const NodePointer* _currentNode)
 {
 	// X returns the splitAxis
 	// Y returns the splitPosition
@@ -105,7 +105,7 @@ sf::Vector2i BVHIterationTwo::ChooseSplit(const Node* _currentNode)
 	return {1, static_cast<int>(_currentNode->m_boundingBox.top) + (static_cast<int>(_currentNode->m_boundingBox.height) / 2)};
 }
 
-void BVHIterationTwo::GrowBoundingBox(Node* _currentNode, Collider* _collider)
+void BVHIterationTwo::GrowBoundingBox(NodePointer* _currentNode, Collider* _collider)
 {
 	const auto& boundingBox = _collider->GetBoundingBox();
 	if (_currentNode->m_boundingBox.width <= 0 || _currentNode->m_boundingBox.height <= 0)
@@ -150,7 +150,7 @@ void BVHIterationTwo::GrowBoundingBox(Node* _currentNode, Collider* _collider)
 	_currentNode->m_boundingBox.height = std::max(_currentNode->m_boundingBox.height, height);
 }
 
-void BVHIterationTwo::RecursiveDraw(sf::RenderTarget& _target, Node* _currentNode, size_t _currentDepth)
+void BVHIterationTwo::RecursiveDraw(sf::RenderTarget& _target, NodePointer* _currentNode, size_t _currentDepth)
 {
 #if _BVHDEBUG
 	if (_currentDepth == 0 || _currentDepth == _currentNode->m_currentDepth)
@@ -176,7 +176,7 @@ void BVHIterationTwo::RecursiveDraw(sf::RenderTarget& _target, Node* _currentNod
 #endif
 }
 
-void BVHIterationTwo::TraversalNodeDestroy(const Node* _currentNode)
+void BVHIterationTwo::TraversalNodeDestroy(const NodePointer* _currentNode)
 {
 	if (_currentNode->m_childA != nullptr)
 	{
@@ -189,7 +189,7 @@ void BVHIterationTwo::TraversalNodeDestroy(const Node* _currentNode)
 	// We are at a leaf node
 	delete _currentNode;
 }
-//void BVHIterationTwo::RecalculateBounds(Node* currentNode) {
+//void BVHIterationTwo::RecalculateBounds(NodePointer* currentNode) {
 //	FloatRect boundingBox = CalculateNodeBoundingBox(currentNode->m_colliders);
 //	currentNode->DefineBounds(boundingBox);
 //
