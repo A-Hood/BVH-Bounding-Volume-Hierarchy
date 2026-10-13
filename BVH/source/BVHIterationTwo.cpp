@@ -23,8 +23,6 @@ void BVHIterationTwo::AddCollider(Collider* _collider)
 // Should be changed to not require colliders as parameters
 void BVHIterationTwo::Generate()
 {
-	auto t1 = std::chrono::high_resolution_clock::now();
-
 	// Creates the master node
 	m_masterNode = new Node();
 	m_masterNode->m_nodeColliders = m_colliders;
@@ -34,10 +32,6 @@ void BVHIterationTwo::Generate()
 	}
 	// Start the recursion
 	CreateNewNode(m_masterNode, 1);
-
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	std::cout << "Time to create BVH: " << std::to_string(time.count()) << "ms\n";
 }
 
 void BVHIterationTwo::Draw(sf::RenderTarget& _target, size_t _currentDepth)

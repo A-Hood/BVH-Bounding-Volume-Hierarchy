@@ -5,7 +5,7 @@ class BVHIterationTwo : public AbstractBVH
 {
 public:
     // Constructor / Destructor
-    BVHIterationTwo() = default;
+    BVHIterationTwo(const char* _bvhName) { m_bvhName = _bvhName; }
     ~BVHIterationTwo() override;
 public:
     // --- Get reference to the colliders ---

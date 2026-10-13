@@ -23,17 +23,11 @@ void BVHIterationOne::AddCollider(Collider* _collider)
 // Should be changed to not require colliders as parameters
 void BVHIterationOne::Generate()
 {
-	auto t1 = std::chrono::high_resolution_clock::now();
-
 	// Creates the master node
 	m_masterNode = new Node();
 	m_masterNode->m_nodeColliders = m_colliders;
 	// Start the recursion
 	CreateNewNode(m_masterNode, 1);
-
-	auto t2 = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<float, std::milli> time = t2 - t1;
-	std::cout << "Time to create BVH: " << std::to_string(time.count()) << "ms\n";
 }
 
 // DEBUG ONLY
@@ -50,6 +44,9 @@ void BVHIterationOne::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 	// DEBUG
 	_currentNode->m_currentDepth = _currentDepth;
 #endif
+
+	Collider nodeBoundingBox = CalculateNodeBoundingBox(_currentNode->m_nodeColliders);
+	_currentNode->m_boundingBox = nodeBoundingBox.GetBoundingBox();
 
 	// Return if the number of game objects is m_maxObjectsInLeafNode or less
 	// And it has reached the maximum depth
@@ -94,6 +91,42 @@ void BVHIterationOne::CreateNewNode(Node* _currentNode, size_t _currentDepth)
 
 	CreateNewNode(_currentNode->m_childA, _currentDepth + 1);
 	CreateNewNode(_currentNode->m_childB, _currentDepth + 1);
+}
+
+Collider BVHIterationOne::CalculateNodeBoundingBox(const std::vector<Collider*>& _nodeVector) const
+{
+	if (_nodeVector.empty())
+	{
+		return {};
+	}
+	// Finds the smallest X and Y in the list of colliders
+	// Also finds the largest X and Y in the list of colliders
+	// Returns the position of the X and Y as well as the width and height of the bounding box
+
+	// Fill in the values of the back object in the current node
+	const sf::FloatRect& boundingBox = _nodeVector.back()->GetBoundingBox();
+	float smallestX = boundingBox.left;
+	float largestX = boundingBox.left + boundingBox.width;
+
+	float smallestY = boundingBox.top;
+	float largestY = boundingBox.top + boundingBox.height;
+
+	// Find smallest and largest X and Y values
+	for (const auto object : _nodeVector) {
+		const sf::FloatRect& objectBoundingBox = object->GetBoundingBox();
+		// Smallest X
+		smallestX = std::min(objectBoundingBox.left, smallestX);
+		// Largest X
+		largestX = std::max(objectBoundingBox.left + objectBoundingBox.width, largestX);
+		// Smallest Y
+		smallestY = std::min(objectBoundingBox.top, smallestY);
+		// Largest Y
+		largestY = std::max(objectBoundingBox.top + objectBoundingBox.height, largestY);
+	}
+	//return { smallestX, smallestY, largestX - smallestX, largestY - smallestY };
+	Collider nodeBoundingBox;
+	nodeBoundingBox.CreateBoundingBox({smallestX, smallestY}, {largestX - smallestX, largestY - smallestY});
+	return nodeBoundingBox;
 }
 
 bool BVHIterationOne::IsXLongestSide(const Node* _currentNode) const

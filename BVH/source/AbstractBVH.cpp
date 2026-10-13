@@ -23,6 +23,12 @@ SearchResult AbstractBVH::SearchForCollision(GameObject& _targetObject)
     m_recursiveSearch.searchTime = bvhSearch.count();
     return m_recursiveSearch;
 }
+
+const char* AbstractBVH::GetBVHName()
+{
+    return m_bvhName;
+}
+
 bool AbstractBVH::AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) const
 {
     return _boxA.left <= _boxB.left + _boxB.width &&

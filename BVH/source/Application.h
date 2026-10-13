@@ -5,6 +5,7 @@
 #include <iostream>
 
 // SFML
+#include <functional>
 #include <SFML/Graphics.hpp>
 
 #include "BVHIterationOne.h"
@@ -31,7 +32,8 @@ public:
 	void Run();
 	void Update();
 	void Close();
-
+private:
+	void MeasureFunctionTime(AbstractBVH& _bvhType);
 private:
 	// Application
 	APPLICATION_SETTINGS APP_SETTINGS;
@@ -44,7 +46,7 @@ private:
 	// Objects
 	std::vector<GameObject> m_gameObjects;
 	GameObject m_externalObject;
-	size_t m_numberOfObjects = 8;
+	size_t m_numberOfObjects = 1000000;
 
 	// DEBUG ------------------------------------------------------------------------
 	size_t m_currentDepth = 0;

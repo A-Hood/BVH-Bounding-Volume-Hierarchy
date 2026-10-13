@@ -8,10 +8,8 @@ public:
     AbstractBVH(size_t _maxDepth, size_t _maxObjectsInLeafNode);
 
 public:
-    //void Generate() override {}
     SearchResult SearchForCollision(GameObject& _targetObject) override;
-
-    //void Draw(sf::RenderTarget& _target, size_t _currentDepth) override {}
+    const char* GetBVHName() override;
 
 protected:
     bool AABBCollision(const sf::FloatRect& _boxA, const sf::FloatRect& _boxB) const override;
@@ -22,6 +20,8 @@ protected:
     // Parameters
     size_t m_maximumDepth = 50;
     size_t m_maxObjectsInLeafNode = 3;
+
+    const char* m_bvhName;
 
     // Keep track of the master node
     Node* m_masterNode = nullptr;

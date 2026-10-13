@@ -7,8 +7,8 @@
 
 
 Application::Application() :
-m_iterationOne(),
-m_iterationTwo()
+m_iterationOne("bvhOne"),
+m_iterationTwo("bvhTwo")
 {
 
 }
@@ -61,8 +61,10 @@ void Application::CreateApplication()
 	for (auto& collider : m_gameObjects)
 	{
 		m_iterationOne.AddCollider(&collider.GetCollider());
+		m_iterationTwo.AddCollider(&collider.GetCollider());
 	}
-	m_iterationOne.Generate();
+	MeasureFunctionTime(m_iterationOne);
+	MeasureFunctionTime(m_iterationTwo);
 }
 
 void Application::Run()
@@ -144,3 +146,14 @@ void Application::Update()
 void Application::Close() {
 	LOG("Application Closed")
 }
+
+void Application::MeasureFunctionTime(AbstractBVH& _bvhType)
+{
+	auto t1 = std::chrono::high_resolution_clock::now();
+	_bvhType.Generate();
+	auto t2 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float, std::milli> time = t2 - t1;
+	LOG("Time to create " << _bvhType.GetBVHName() << ": " << std::to_string(time.count()) << "ms")
+}
+
+
