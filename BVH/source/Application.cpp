@@ -4,11 +4,13 @@
 
 #include "BVHIterationOne.h"
 #include "Random.h"
+#include <iostream>
 
 
 Application::Application() :
 m_iterationOne("bvhOne"),
-m_iterationTwo("bvhTwo")
+m_iterationTwo("bvhTwo"),
+m_cacheLocality("cacheLocality")
 {
 
 }
@@ -63,6 +65,7 @@ void Application::CreateApplication()
 		m_iterationOne.AddCollider(&collider.GetCollider());
 		m_iterationTwo.AddCollider(&collider.GetCollider());
 	}
+	//m_cacheLocality.CreateColliderRef(m_gameObjects);
 	MeasureFunctionTime(m_iterationOne);
 	MeasureFunctionTime(m_iterationTwo);
 }

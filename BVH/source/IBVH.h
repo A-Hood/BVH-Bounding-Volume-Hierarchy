@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include <vector>
+#include <SFML/Graphics/Rect.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 
 struct NodePointer;
 class GameObject;
 class Collider;
+
 
 struct SearchResult {
     float searchTime = 0;

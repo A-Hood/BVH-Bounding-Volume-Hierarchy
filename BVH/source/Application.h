@@ -2,12 +2,12 @@
 #define APPLICATION_H
 #include <cstdint>
 #include <vector>
-#include <iostream>
 
 // SFML
-#include <functional>
 #include <SFML/Graphics.hpp>
 
+
+#include "BVHCacheLocality.h"
 #include "BVHIterationOne.h"
 #include "BVHIterationTwo.h"
 #include "GameObject.h"
@@ -15,6 +15,8 @@
 #define LOG(x) std::cout << x << std::endl;
 
 // Simple application class for better readability, will not be included in final BVH
+
+//class AbstractBVH;
 
 class Application {
 	struct APPLICATION_SETTINGS
@@ -42,6 +44,7 @@ private:
 	// BVH versions
 	BVHIterationOne m_iterationOne;
 	BVHIterationTwo m_iterationTwo;
+	BVHCacheLocality m_cacheLocality;
 
 	// Objects
 	std::vector<GameObject> m_gameObjects;

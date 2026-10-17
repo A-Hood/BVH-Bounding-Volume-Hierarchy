@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
-#include <iostream>
+#include <SFML/Graphics/RenderTarget.hpp>
 
 #include "NodePointer.h"
 #include "Application.h"
@@ -72,7 +72,6 @@ void BVHIterationOne::CreateNewNode(NodePointer* _currentNode, size_t _currentDe
 	leftSide.reserve(reserveSize);
 	rightSide.reserve(reserveSize);
 
-	// Yeah not ideal
 	float boundaryMidpoint;		// Can represent either on the x or the y
 	if (IsXLongestSide(_currentNode))
 	{
@@ -83,14 +82,21 @@ void BVHIterationOne::CreateNewNode(NodePointer* _currentNode, size_t _currentDe
 		boundaryMidpoint = _currentNode->m_boundingBox.top + (_currentNode->m_boundingBox.height / 2);
 	}
 
-	// TODO: We can grow the bounding box then check which side the box is on
 	AssignObjectSide(leftSide, rightSide, _currentNode, boundaryMidpoint);
 
 	_currentNode->m_childB = childB;
 	_currentNode->m_childA = childA;
 
-	CreateNewNode(_currentNode->m_childA, _currentDepth + 1);
-	CreateNewNode(_currentNode->m_childB, _currentDepth + 1);
+	if (!leftSide.empty())
+	{
+		CreateNewNode(_currentNode->m_childA, _currentDepth + 1);
+	}
+	if (!rightSide.empty())
+	{
+		CreateNewNode(_currentNode->m_childB, _currentDepth + 1);
+	}
+	//CreateNewNode(_currentNode->m_childA, _currentDepth + 1);
+	//CreateNewNode(_currentNode->m_childB, _currentDepth + 1);
 }
 
 Collider BVHIterationOne::CalculateNodeBoundingBox(const std::vector<Collider*>& _nodeVector) const

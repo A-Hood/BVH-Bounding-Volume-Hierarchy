@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/VertexArray.hpp>
 
 #include "Collider.h"
 

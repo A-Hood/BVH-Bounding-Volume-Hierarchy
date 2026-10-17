@@ -1,7 +1,6 @@
 #pragma once
 #include <SFML/Graphics/Rect.hpp>
 #include <vector>
-class Collider;
 
 struct NodePointer
 {

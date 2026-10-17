@@ -7,10 +7,10 @@ class BVHCacheLocality : public AbstractBVH
 {
 public:
     BVHCacheLocality(const char* _bvhName) { m_bvhName = _bvhName; }
-    ~BVHCacheLocality() override;
+    ~BVHCacheLocality() override = default;
 public:
     // --- Get reference to the colliders ---
-    void CreateColliderRef(const std::vector<Collider>& _colliderVecRef);
+    void CreateColliderRef(const std::vector<GameObject>& _colliderVecRef);
     // --- Create BVH ---
     void Generate() override;
 
@@ -30,7 +30,7 @@ private:
     //void RecalculateBounds(NodeInt* currentNode) {}
 private:
     // Hold the colliders used in the BVH
-    std::vector<Collider> m_gameObjects;
+    std::vector<GameObject> m_gameObjects;
 
     // Keep track of all the nodes
     std::vector<NodeInt> m_nodeVec;

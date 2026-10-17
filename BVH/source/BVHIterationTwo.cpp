@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
-#include <iostream>
+#include <SFML/Graphics/RenderTarget.hpp>
 
 #include "Application.h"
 #include "NodePointer.h"

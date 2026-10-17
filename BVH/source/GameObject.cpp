@@ -1,5 +1,7 @@
 ﻿#include "GameObject.h"
 
+#include <SFML/Graphics/RenderTarget.hpp>
+
 GameObject::GameObject(sf::FloatRect _rect)
 {
     Initialise();

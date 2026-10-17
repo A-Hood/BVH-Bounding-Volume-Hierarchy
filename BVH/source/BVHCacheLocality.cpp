@@ -1,10 +1,13 @@
 ﻿#include "BVHCacheLocality.h"
 
 #include <SFML/Graphics/RectangleShape.hpp>
+#include <SFML/Graphics/RenderTarget.hpp>
 
 #include "NodeInt.h"
 #include "Collider.h"
-void BVHCacheLocality::CreateColliderRef(const std::vector<Collider>& _colliderVecRef)
+#include "GameObject.h"
+
+void BVHCacheLocality::CreateColliderRef(const std::vector<GameObject>& _colliderVecRef)
 {
     m_gameObjects = _colliderVecRef;
     m_nodeVec.reserve((2 * m_gameObjects.size()) - 1);
@@ -19,7 +22,7 @@ void BVHCacheLocality::Generate()
     // Find the size of the master node
     for (auto index = masterNode.objectIndex; index < masterNode.objectIndex + masterNode.objectCount; index++)
     {
-        GrowBoundingBox(masterNode, m_gameObjects[index]);
+        GrowBoundingBox(masterNode, m_gameObjects[index].GetCollider());
     }
 
     // Move into the vector
@@ -82,10 +85,10 @@ void BVHCacheLocality::CreateNewNode(NodeInt& _currentNode, uint32_t parentIndex
 
     for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
-        const bool isSideA = m_gameObjects[index].GetCentreFromAxis(splitAxis) < splitPosition;
+        const bool isSideA = m_gameObjects[index].GetCollider().GetCentreFromAxis(splitAxis) < splitPosition;
         NodeInt& currentChild = isSideA ? childA : childB;
         // Changes the size of the bounding box of the child node using the current collider
-        GrowBoundingBox(currentChild, m_gameObjects[index]);
+        GrowBoundingBox(currentChild, m_gameObjects[index].GetCollider());
         currentChild.objectCount++;
 
         if (isSideA)

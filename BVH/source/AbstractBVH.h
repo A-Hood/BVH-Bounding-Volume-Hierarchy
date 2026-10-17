@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "IBVH.h"
+#include <SFML/Graphics/Rect.hpp>
 
 class AbstractBVH : public IBVH
 {
