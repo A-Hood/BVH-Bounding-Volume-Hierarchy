@@ -59,15 +59,17 @@ void Application::CreateApplication()
 	//colliders.emplace_back(5, FloatRect(252, 179, 64, 64));
 	//colliders.emplace_back(6, FloatRect(825, 420, 64, 64));
 
+	LOG("Created objects")
 	// Set-up BVH
 	for (auto& collider : m_gameObjects)
 	{
 		m_iterationOne.AddCollider(&collider.GetCollider());
 		m_iterationTwo.AddCollider(&collider.GetCollider());
 	}
-	//m_cacheLocality.CreateColliderRef(m_gameObjects);
+	m_cacheLocality.CreateColliderRef(m_gameObjects);
 	MeasureFunctionTime(m_iterationOne);
 	MeasureFunctionTime(m_iterationTwo);
+	MeasureFunctionTime(m_cacheLocality);
 }
 
 void Application::Run()

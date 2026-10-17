@@ -3,7 +3,6 @@
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderTarget.hpp>
 
-#include "NodeInt.h"
 #include "Collider.h"
 #include "GameObject.h"
 

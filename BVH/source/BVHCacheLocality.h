@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "AbstractBVH.h"
-
-struct NodeInt;
+#include "NodeInt.h"
 
 class BVHCacheLocality : public AbstractBVH
 {
