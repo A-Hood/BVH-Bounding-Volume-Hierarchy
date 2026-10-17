@@ -2,10 +2,10 @@
 #define APPLICATION_H
 #include <cstdint>
 #include <vector>
-#include <iostream>
 
 // SFML
 #include <SFML/Graphics.hpp>
+#include <iostream>
 
 #include "BoundingVolumeHierarchy.h"
 #include "GameObject.h"
@@ -41,7 +41,7 @@ private:
 	std::vector<GameObject> colliders;
 	GameObject birdObject;
 	size_t currentDepth = 0;
-	size_t m_numberOfObjects = 25;
+	size_t m_numberOfObjects = 1000000;
 
 	sf::VertexArray gameObjectBatch;
 };

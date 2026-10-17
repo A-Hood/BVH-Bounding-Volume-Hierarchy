@@ -22,7 +22,7 @@ public:
     ~BVH();
 public:
     // --- Get reference to the colliders ---
-    void CreateColliderRef(const std::vector<GameObject>& _colliderVecRef);
+    void CreateCollider(Collider& _collider);
     // --- Create BVH ---
     void GenerateBVH();
     // --- Search ---
@@ -44,16 +44,11 @@ private:
     // 3. Calculate the bounds of this new node
     void GrowBoundingBox(Node& _currentNode, Collider& _collider) const;
 
-    inline void DefineNodeType(Node* _currentNode, bool _nodeIsStatic) {}
-
     // --- Internal search ---
     void RecursiveSearch(Collider& _searchObject, const Node& _currentNode);
-
-    // --- Dynamic BVH ---
-    void RecalculateBounds(Node* currentNode) {}
 private:
     // Hold the colliders used in the BVH
-    std::vector<GameObject> m_gameObjects;
+    std::vector<Collider> m_colliders;
 
     // Keep track of all the nodes
     std::vector<Node> m_nodeVec;

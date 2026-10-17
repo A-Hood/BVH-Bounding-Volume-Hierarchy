@@ -31,7 +31,7 @@ void Application::CreateApplication() {
 		gameObjectBatch[(x * 4) + 1].position = vertices[1].position;
 		gameObjectBatch[(x * 4) + 2].position = vertices[2].position;
 		gameObjectBatch[(x * 4) + 3].position = vertices[3].position;
-		
+
 		gameObjectBatch[(x * 4) + 0].color = vertices[0].color;
 		gameObjectBatch[(x * 4) + 1].color = vertices[1].color;
 		gameObjectBatch[(x * 4) + 2].color = vertices[2].color;
@@ -53,7 +53,10 @@ void Application::CreateApplication() {
 	//colliders.emplace_back(sf::FloatRect(825, 420, 64, 64));
 
 	// Set-up BVH
-	m_bvh.CreateColliderRef(colliders);
+	for (auto& collider : colliders)
+	{
+		m_bvh.CreateCollider(collider.GetCollider());
+	}
 	m_bvh.GenerateBVH();
 
 	//auto result = m_bvh.SearchBVH(birdObject);

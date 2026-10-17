@@ -14,28 +14,28 @@ BVH::BVH(size_t _maxDepth)
 
 BVH::~BVH()
 {
-    m_gameObjects.clear();
+    m_colliders.clear();
     m_nodeVec.clear();
 }
 
-void BVH::CreateColliderRef(const std::vector<GameObject>& _colliderVecRef)
+void BVH::CreateCollider(Collider& _collider)
 {
-    m_gameObjects = _colliderVecRef;
-    m_nodeVec.reserve((2 * m_gameObjects.size()) - 1);
+    m_colliders.emplace_back(_collider);
 }
 
 void BVH::GenerateBVH()
 {
     auto t1 = std::chrono::system_clock::now();
     // Create master node - Master node is the first node in the vector
+    m_nodeVec.reserve((2 * m_colliders.size()) - 1);
     Node& masterNode = m_nodeVec.emplace_back();
     masterNode.objectIndex = 0;
-    masterNode.objectCount = m_gameObjects.size();
+    masterNode.objectCount = m_colliders.size();
 
     // Find the size of the master node
     for (auto index = masterNode.objectIndex; index < masterNode.objectIndex + masterNode.objectCount; index++)
     {
-        GrowBoundingBox(masterNode, m_gameObjects[index].GetCollider());
+        GrowBoundingBox(masterNode, m_colliders[index]);
     }
 
     // Move into the vector
@@ -43,7 +43,7 @@ void BVH::GenerateBVH()
 
     auto t2 = std::chrono::system_clock::now();
     std::chrono::duration<float, std::milli> time = t2 - t1;
-    LOG("Time to create BVH: " + std::to_string(time.count()) + "ms");
+    LOG("Time to create BVH: " + std::to_string(time.count()) + "ms")
 
 }
 
@@ -130,16 +130,16 @@ void BVH::CreateNewNode(Node& _currentNode, const uint32_t parentIndex, const si
 
     for (auto index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
-        const bool isSideA = m_gameObjects[index].GetCollider().GetCentreFromAxis(splitAxis) < splitPosition;
+        const bool isSideA = m_colliders[index].GetCentreFromAxis(splitAxis) < splitPosition;
         Node& currentChild = isSideA ? childA : childB;
         // Changes the size of the bounding box of the child node using the current collider
-        GrowBoundingBox(currentChild, m_gameObjects[index].GetCollider());
+        GrowBoundingBox(currentChild, m_colliders[index]);
         currentChild.objectCount++;
 
         if (isSideA)
         {
             const uint32_t swap = currentChild.objectIndex + currentChild.objectCount - 1;
-            std::swap(m_gameObjects[index], m_gameObjects[swap]);
+            std::swap(m_colliders[index], m_colliders[swap]);
             childB.objectIndex++;
         }
     }
@@ -233,8 +233,8 @@ void BVH::RecursiveSearch(Collider& _searchObject, const Node& _currentNode)
     // Check all the colliders within this node. Returns the index of gameobjects it collided with
     for (uint32_t index = _currentNode.objectIndex; index < _currentNode.objectIndex + _currentNode.objectCount; index++)
     {
-        GameObject& currentGameObject = m_gameObjects[index];
-        if (AABBCollision(currentGameObject.GetCollider().GetBoundingBox(), _searchObject.GetBoundingBox()))
+        Collider& currentGameObject = m_colliders[index];
+        if (AABBCollision(currentGameObject.GetBoundingBox(), _searchObject.GetBoundingBox()))
         {
             // Object hit. Note down the index of collision
             m_collidedObjectsQueue.emplace_back(index);
